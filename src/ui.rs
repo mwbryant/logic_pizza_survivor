@@ -6,7 +6,7 @@ impl Plugin for GameUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(spawn_header_ui)
             .add_startup_system(spawn_player_ui)
-            .add_startup_system(spawn_level_up_ui)
+            //.add_startup_system(spawn_level_up_ui)
             .add_system(button_system)
             .add_system(player_health_ui_sync)
             .add_system(player_exp_ui_sync);
