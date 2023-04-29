@@ -7,15 +7,18 @@ use bevy::{
             Extent3d, TextureDescriptor, TextureDimension, TextureFormat, TextureUsages,
         },
         texture::BevyDefault,
-        view::{visibility, RenderLayers},
+        view::RenderLayers,
     },
     sprite::MaterialMesh2dBundle,
 };
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_rapier2d::prelude::*;
+use bevy_turborand::prelude::*;
 
 pub const WIDTH: f32 = 857.0;
 pub const HEIGHT: f32 = 480.0;
+pub const RENDER_WIDTH: f32 = 1920.;
+pub const RENDER_HEIGHT: f32 = 1080.;
 
 fn main() {
     App::new()
@@ -41,17 +44,23 @@ fn main() {
             gravity: Vec2::ZERO,
             ..default()
         })
-        .add_plugin(RapierDebugRenderPlugin::default())
+        .add_plugin(RngPlugin::default())
+        //.add_plugin(RapierDebugRenderPlugin::default())
         .add_startup_system(spawn_player)
         .add_startup_system(spawn_camera)
         .add_system(player_movement)
         .add_system(whip_attack)
+        .add_system(enemy_death_check)
+        .add_system(player_exp_start_pickup)
+        .add_system(player_gain_exp)
         .add_system(enemy_movement)
+        .add_system(orb_move_to_player)
         .run();
 }
 
 #[derive(Component)]
 pub struct Player {
+    pub exp: i64,
     pub speed: f32,
     pub health: f32,
 }
@@ -151,9 +160,69 @@ fn spawn_camera(
     ));
 }
 
+fn player_exp_start_pickup(
+    player: Query<(&Transform, &Collider), With<Player>>,
+    rapier_context: Res<RapierContext>,
+    mut orbs: Query<&mut ExpOrb>,
+) {
+    let (transform, collider) = player.single();
+
+    rapier_context.intersections_with_shape(
+        transform.translation.truncate(),
+        0.0,
+        collider,
+        QueryFilter::new(),
+        |entity| {
+            if let Ok(mut orb) = orbs.get_mut(entity) {
+                orb.collecting = true;
+            }
+            true
+        },
+    );
+}
+
+fn player_gain_exp(
+    mut commands: Commands,
+    orbs: Query<(Entity, &Transform, &ExpOrb)>,
+    mut player: Query<(&Transform, &mut Player), Without<ExpOrb>>,
+) {
+    let (player_transform, mut player) = player.single_mut();
+
+    for (entity, transform, orb) in &orbs {
+        if Vec2::distance(
+            transform.translation.truncate(),
+            player_transform.translation.truncate(),
+        ) < 0.1
+        {
+            //TODO event for sound
+            player.exp += orb.value;
+            commands.entity(entity).despawn_recursive();
+        }
+    }
+}
+
+fn orb_move_to_player(
+    mut orbs: Query<(&mut Transform, &ExpOrb)>,
+    player: Query<&Transform, (With<Player>, Without<ExpOrb>)>,
+    time: Res<Time>,
+) {
+    let player_transform = player.single();
+    for (mut transform, orb) in &mut orbs {
+        if orb.collecting {
+            //TODO bouncing animation
+            let direction = (transform.translation.truncate()
+                - player_transform.translation.truncate())
+            .normalize();
+
+            transform.translation -=
+                (direction * time.delta_seconds() * orb.collection_speed).extend(0.);
+        }
+    }
+}
+
 fn whip_attack(
     mut whips: Query<(&Collider, &GlobalTransform, &mut Whip, &mut Visibility)>,
-    mut enemy: Query<(&mut Sprite, &mutEnemy)>,
+    mut enemy: Query<(&mut Sprite, &mut Enemy)>,
     rapier_context: Res<RapierContext>,
     time: Res<Time>,
 ) {
@@ -173,7 +242,6 @@ fn whip_attack(
                 collider,
                 QueryFilter::new(),
                 |entity| {
-                    info!("Hit: {:?}", entity);
                     if let Ok((mut sprite, mut enemy)) = enemy.get_mut(entity) {
                         sprite.color = Color::PINK;
                         enemy.health -= whip.damage;
@@ -183,6 +251,66 @@ fn whip_attack(
             );
         }
     }
+}
+
+fn enemy_death_check(
+    mut commands: Commands,
+    mut enemies: Query<(Entity, &Transform, &Enemy, &mut RngComponent)>,
+) {
+    //TODO dying animation
+    for (entity, transform, enemy, mut rng) in &mut enemies {
+        if enemy.health <= 0.0 {
+            //TODO fire event for sounds
+            commands.entity(entity).despawn_recursive();
+            //Spawn exp orb (can extract into fn)
+            info!("rng");
+            if rng.f32() > 0.5 {
+                let mut orb = ExpOrbBundle::default();
+                orb.sprite.transform.translation.x = transform.translation.x;
+                orb.sprite.transform.translation.y = transform.translation.y;
+                commands.spawn(orb);
+            }
+        }
+    }
+}
+
+#[derive(Bundle)]
+pub struct ExpOrbBundle {
+    #[bundle]
+    pub sprite: SpriteBundle,
+    pub exp_orb: ExpOrb,
+    pub collider: Collider,
+    pub sensor: Sensor,
+}
+
+impl Default for ExpOrbBundle {
+    fn default() -> Self {
+        Self {
+            sprite: SpriteBundle {
+                transform: Transform::from_xyz(0.0, 0.0, 100.0),
+                sprite: Sprite {
+                    color: Color::ALICE_BLUE,
+                    custom_size: Some(Vec2::new(0.2, 0.2)),
+                    ..default()
+                },
+                ..default()
+            },
+            exp_orb: ExpOrb {
+                value: 1,
+                collection_speed: 5.0,
+                collecting: false,
+            },
+            collider: Collider::ball(1.0),
+            sensor: Sensor,
+        }
+    }
+}
+
+#[derive(Component)]
+pub struct ExpOrb {
+    pub value: i64,
+    pub collection_speed: f32,
+    pub collecting: bool,
 }
 
 fn enemy_movement(
@@ -199,12 +327,26 @@ fn enemy_movement(
         transform.translation -= (direction * time.delta_seconds() * enemy.speed).extend(0.);
     }
 }
+fn spawn_player_ui(mut commands: Commands) {
+    commands.spawn(NodeBundle {
+        node: todo!(),
+        style: todo!(),
+        background_color: todo!(),
+        focus_policy: todo!(),
+        transform: todo!(),
+        global_transform: todo!(),
+        visibility: todo!(),
+        computed_visibility: todo!(),
+        z_index: todo!(),
+    });
+}
 
-fn spawn_player(mut commands: Commands) {
+fn spawn_player(mut commands: Commands, mut global_rng: ResMut<GlobalRng>) {
     commands
         .spawn((
             SpriteBundle::default(),
             Player {
+                exp: 0,
                 speed: 10.0,
                 health: 100.0,
             },
@@ -244,6 +386,7 @@ fn spawn_player(mut commands: Commands) {
                 speed: 5.0,
                 health: 5.0,
             },
+            RngComponent::from(&mut global_rng),
             RigidBody::Dynamic,
             LockedAxes::ROTATION_LOCKED_Z,
             Damping {

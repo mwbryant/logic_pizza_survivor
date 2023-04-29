@@ -18,5 +18,5 @@ dev = [
 bevy = "0.10"
 bevy_rapier2d = { version = "0.21",  features = [ "simd-stable", "debug-render-2d" ] }
 bevy-inspector-egui = { version = "0.18.0", default-features = false, features = ["bevy_pbr"] }
-rand = "0.8.5"
+bevy_turborand = "0.5"
 bevy_easings = "0.10"
