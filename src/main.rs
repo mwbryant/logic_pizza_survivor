@@ -48,10 +48,12 @@ fn main() {
         //.add_plugin(RapierDebugRenderPlugin::default())
         .add_startup_system(spawn_player)
         .add_startup_system(spawn_camera)
+        .add_startup_system(spawn_player_ui)
         .add_system(player_movement)
         .add_system(whip_attack)
         .add_system(enemy_death_check)
         .add_system(player_exp_start_pickup)
+        .add_system(player_exp_ui_sync)
         .add_system(player_gain_exp)
         .add_system(enemy_movement)
         .add_system(orb_move_to_player)
@@ -61,6 +63,8 @@ fn main() {
 #[derive(Component)]
 pub struct Player {
     pub exp: i64,
+    pub next_level_exp: i64,
+    pub level: i64,
     pub speed: f32,
     pub health: f32,
 }
@@ -189,16 +193,25 @@ fn player_gain_exp(
     let (player_transform, mut player) = player.single_mut();
 
     for (entity, transform, orb) in &orbs {
+        //TODO probably should use physics for this
         if Vec2::distance(
             transform.translation.truncate(),
             player_transform.translation.truncate(),
-        ) < 0.1
+        ) < 0.3
         {
             //TODO event for sound
             player.exp += orb.value;
             commands.entity(entity).despawn_recursive();
         }
     }
+}
+
+fn player_exp_ui_sync(mut ui: Query<&mut Style, With<ExpUI>>, player: Query<&Player>) {
+    let mut style = ui.single_mut();
+    let player = player.single();
+
+    let percent = player.exp as f32 / player.next_level_exp as f32;
+    style.size.width = Val::Percent(percent * 100.0);
 }
 
 fn orb_move_to_player(
@@ -263,7 +276,6 @@ fn enemy_death_check(
             //TODO fire event for sounds
             commands.entity(entity).despawn_recursive();
             //Spawn exp orb (can extract into fn)
-            info!("rng");
             if rng.f32() > 0.5 {
                 let mut orb = ExpOrbBundle::default();
                 orb.sprite.transform.translation.x = transform.translation.x;
@@ -327,17 +339,47 @@ fn enemy_movement(
         transform.translation -= (direction * time.delta_seconds() * enemy.speed).extend(0.);
     }
 }
+
+#[derive(Component)]
+pub struct HeaderBarUI;
+
+#[derive(Component)]
+pub struct ExpUI;
+
 fn spawn_player_ui(mut commands: Commands) {
-    commands.spawn(NodeBundle {
-        node: todo!(),
-        style: todo!(),
-        background_color: todo!(),
-        focus_policy: todo!(),
-        transform: todo!(),
-        global_transform: todo!(),
-        visibility: todo!(),
-        computed_visibility: todo!(),
-        z_index: todo!(),
+    let parent_node = (
+        NodeBundle {
+            style: Style {
+                //XXX using Px here because UI isn't based on camera size, just window size
+                size: Size::new(Val::Px(RENDER_WIDTH), Val::Px(RENDER_HEIGHT * 0.15)),
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::FlexStart,
+                flex_direction: FlexDirection::Row,
+                position_type: PositionType::Absolute,
+                ..default()
+            },
+            background_color: BackgroundColor(Color::GREEN),
+            ..default()
+        },
+        HeaderBarUI,
+        Name::new("Header Bar UI"),
+    );
+
+    let exp_node = (
+        NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(0.0), Val::Percent(100.0)),
+                ..default()
+            },
+            background_color: BackgroundColor(Color::BLUE),
+            ..default()
+        },
+        ExpUI,
+        Name::new("Exp UI"),
+    );
+
+    commands.spawn(parent_node).with_children(|commands| {
+        commands.spawn(exp_node);
     });
 }
 
@@ -347,9 +389,12 @@ fn spawn_player(mut commands: Commands, mut global_rng: ResMut<GlobalRng>) {
             SpriteBundle::default(),
             Player {
                 exp: 0,
+                next_level_exp: 5,
+                level: 1,
                 speed: 10.0,
                 health: 100.0,
             },
+            Name::new("Player"),
             Collider::ball(1.0),
         ))
         .with_children(|commands| {
@@ -363,6 +408,7 @@ fn spawn_player(mut commands: Commands, mut global_rng: ResMut<GlobalRng>) {
                     },
                     ..default()
                 },
+                Name::new("Whip"),
                 Whip {
                     timer: Timer::from_seconds(2.0, TimerMode::Repeating),
                     damage: 5.0,
@@ -386,6 +432,7 @@ fn spawn_player(mut commands: Commands, mut global_rng: ResMut<GlobalRng>) {
                 speed: 5.0,
                 health: 5.0,
             },
+            Name::new("Enemy"),
             RngComponent::from(&mut global_rng),
             RigidBody::Dynamic,
             LockedAxes::ROTATION_LOCKED_Z,
