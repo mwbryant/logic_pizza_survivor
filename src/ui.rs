@@ -6,9 +6,75 @@ impl Plugin for GameUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(spawn_header_ui)
             .add_startup_system(spawn_player_ui)
+            .add_startup_system(spawn_level_up_ui)
+            .add_system(button_system)
             .add_system(player_health_ui_sync)
             .add_system(player_exp_ui_sync);
     }
+}
+
+#[derive(Component)]
+pub struct MyButton {
+    size: Vec2,
+}
+
+fn button_system(cursor: Res<CursorPosition>, buttons: Query<(&MyButton, &GlobalTransform)>) {
+    for (button, transform) in &buttons {
+        let position = transform.translation().truncate() / Vec2::new(RENDER_WIDTH, RENDER_HEIGHT);
+        if bevy::sprite::collide_aabb::collide(
+            position.extend(0.0),
+            button.size,
+            cursor.screen_position.extend(0.0),
+            Vec2::splat(0.01),
+        )
+        .is_some()
+        {
+            info!("On button");
+        } else {
+            info!("Off button");
+        }
+    }
+}
+
+fn spawn_level_up_ui(mut commands: Commands) {
+    let level_up_popup = NodeBundle {
+        style: Style {
+            size: Size::new(Val::Percent(80.0), Val::Percent(70.0)),
+            position: UiRect {
+                left: Val::Percent(0.1),
+                right: Val::Auto,
+                top: Val::Percent(0.15),
+                bottom: Val::Auto,
+            },
+            position_type: PositionType::Absolute,
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        },
+        background_color: Color::AQUAMARINE.into(),
+        ..default()
+    };
+
+    let button = (
+        ButtonBundle {
+            style: Style {
+                size: Size::new(Val::Percent(10.0), Val::Percent(10.0)),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                align_self: AlignSelf::FlexEnd,
+                ..default()
+            },
+            background_color: Color::CRIMSON.into(),
+            ..default()
+        },
+        MyButton {
+            size: Vec2::new(0.1, 0.1),
+        },
+    );
+
+    commands.spawn(level_up_popup).with_children(|commands| {
+        commands.spawn(button);
+    });
 }
 
 fn player_health_ui_sync(mut ui: Query<&mut Style, With<HealthUI>>, player: Query<&Player>) {
@@ -32,7 +98,7 @@ fn spawn_header_ui(mut commands: Commands) {
         NodeBundle {
             style: Style {
                 //XXX using Px here because UI isn't based on camera size, just window size
-                size: Size::new(Val::Px(RENDER_WIDTH), Val::Px(RENDER_HEIGHT * 0.1)),
+                size: Size::new(Val::Percent(100.0), Val::Percent(10.0)),
                 align_items: AlignItems::Center,
                 justify_content: JustifyContent::FlexStart,
                 flex_direction: FlexDirection::Row,
@@ -65,20 +131,16 @@ fn spawn_header_ui(mut commands: Commands) {
 }
 
 fn spawn_player_ui(mut commands: Commands) {
-    let health_width = RENDER_WIDTH * 0.05;
-    let health_height = RENDER_HEIGHT * 0.02;
-    let height_offset = 100.0;
-
     let parent_node = (
         NodeBundle {
             style: Style {
                 //XXX using Px here because UI isn't based on camera size, just window size
-                size: Size::new(Val::Px(health_width), Val::Px(health_height)),
+                size: Size::new(Val::Percent(5.0), Val::Percent(2.0)),
                 position: UiRect {
                     //Player is always centered
-                    left: Val::Px((RENDER_WIDTH - health_width) / 2.0),
+                    left: Val::Percent(45.0),
                     right: Val::Auto,
-                    top: Val::Px((RENDER_HEIGHT - health_height + height_offset) / 2.0),
+                    top: Val::Px(55.0),
                     bottom: Val::Auto,
                 },
                 align_items: AlignItems::Center,

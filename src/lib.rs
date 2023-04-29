@@ -20,11 +20,23 @@ pub mod prelude {
     pub use bevy_rapier2d::prelude::*;
     pub use bevy_turborand::prelude::*;
 
+    #[derive(States, PartialEq, Eq, Default, Debug, Clone, Hash)]
+    pub enum GameState {
+        #[default]
+        Gameplay,
+        LevelUp,
+    }
+
     #[derive(Component)]
     pub struct Enemy {
         pub speed: f32,
         pub health: f32,
         pub damage_per_second: f32,
+    }
+
+    #[derive(Resource, Default)]
+    pub struct CursorPosition {
+        pub screen_position: Vec2,
     }
 
     #[derive(Bundle)]
@@ -48,6 +60,9 @@ pub mod prelude {
 
     #[derive(Component)]
     pub struct MainCamera;
+
+    #[derive(Component)]
+    pub struct FinalCamera;
 
     #[derive(Component)]
     pub struct Player {

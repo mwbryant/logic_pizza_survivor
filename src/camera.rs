@@ -16,7 +16,25 @@ pub struct GameCameraPlugin;
 impl Plugin for GameCameraPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(spawn_camera)
+            .add_system(update_cursor)
+            .init_resource::<CursorPosition>()
             .add_system(camera_follow.in_base_set(CoreSet::PostUpdate));
+    }
+}
+
+fn update_cursor(
+    mut cursor: ResMut<CursorPosition>,
+    windows: Query<&Window>,
+    final_camera: Query<&Camera, With<FinalCamera>>,
+) {
+    let camera = final_camera.single();
+    let window = windows.single();
+
+    if let Some(screen_position) = window.cursor_position() {
+        let screen_position = screen_position / Vec2::new(window.width(), window.height());
+        let screen_position = Vec2::new(screen_position.x, 1.0 - screen_position.y);
+        info!("{:?}", screen_position);
+        cursor.screen_position = screen_position;
     }
 }
 
@@ -67,7 +85,7 @@ fn spawn_camera(
     camera.projection.scaling_mode = ScalingMode::FixedVertical(20.0);
     camera.camera.target = RenderTarget::Image(image_handle.clone());
 
-    commands.spawn((camera, MainCamera, UiCameraConfig { show_ui: true }));
+    commands.spawn((camera, MainCamera, UiCameraConfig { show_ui: false }));
 
     let quad_handle = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(16.0, 9.0))));
 
@@ -104,6 +122,7 @@ fn spawn_camera(
     commands.spawn((
         camera,
         post_processing_pass_layer,
-        UiCameraConfig { show_ui: false },
+        FinalCamera,
+        UiCameraConfig { show_ui: true },
     ));
 }

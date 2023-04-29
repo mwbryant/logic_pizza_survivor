@@ -31,6 +31,7 @@ fn main() {
         .insert_resource(WaveManager {
             next_spawn: Timer::from_seconds(0.5, TimerMode::Repeating),
         })
+        .add_state::<GameState>()
         .add_plugin(ExpPlugin)
         .add_plugin(GameCameraPlugin)
         .add_plugin(GameUiPlugin)

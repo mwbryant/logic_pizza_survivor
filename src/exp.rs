@@ -4,7 +4,7 @@ pub struct ExpPlugin;
 
 impl Plugin for ExpPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(orb_move_to_player);
+        app.add_system(orb_move_to_player.in_set(OnUpdate(GameState::Gameplay)));
     }
 }
 

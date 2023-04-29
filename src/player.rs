@@ -4,11 +4,27 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_player)
-            .add_system(player_exp_start_pickup)
-            .add_system(whip_attack)
-            .add_system(player_gain_exp)
-            .add_system(player_movement);
+        app.add_startup_system(spawn_player).add_systems(
+            (
+                player_movement,
+                player_exp_start_pickup,
+                whip_attack,
+                player_gain_exp,
+                player_level_up,
+            )
+                .in_set(OnUpdate(GameState::Gameplay)),
+        );
+    }
+}
+
+fn player_level_up(mut player: Query<&mut Player>, mut game_state: ResMut<NextState<GameState>>) {
+    let mut player = player.single_mut();
+
+    if player.exp >= player.next_level_exp {
+        player.exp = 0;
+        player.next_level_exp = (player.next_level_exp as f32 * 1.4) as i64;
+        player.level += 1;
+        game_state.set(GameState::LevelUp);
     }
 }
 

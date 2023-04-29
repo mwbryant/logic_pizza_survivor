@@ -4,10 +4,15 @@ pub struct EnemyPlugin;
 
 impl Plugin for EnemyPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(enemy_death_check)
-            .add_system(enemy_movement)
-            .add_system(spawn_enemy)
-            .add_system(enemy_damage_player.in_base_set(CoreSet::PostUpdate));
+        app.add_systems(
+            (
+                enemy_death_check,
+                enemy_movement,
+                spawn_enemy,
+                enemy_damage_player.after(enemy_movement),
+            )
+                .in_set(OnUpdate(GameState::Gameplay)),
+        );
     }
 }
 
