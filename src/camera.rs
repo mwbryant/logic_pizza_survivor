@@ -22,18 +22,12 @@ impl Plugin for GameCameraPlugin {
     }
 }
 
-fn update_cursor(
-    mut cursor: ResMut<CursorPosition>,
-    windows: Query<&Window>,
-    final_camera: Query<&Camera, With<FinalCamera>>,
-) {
-    let camera = final_camera.single();
+fn update_cursor(mut cursor: ResMut<CursorPosition>, windows: Query<&Window>) {
     let window = windows.single();
 
     if let Some(screen_position) = window.cursor_position() {
         let screen_position = screen_position / Vec2::new(window.width(), window.height());
         let screen_position = Vec2::new(screen_position.x, 1.0 - screen_position.y);
-        info!("{:?}", screen_position);
         cursor.screen_position = screen_position;
     }
 }

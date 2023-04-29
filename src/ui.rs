@@ -37,16 +37,20 @@ fn button_system(cursor: Res<CursorPosition>, buttons: Query<(&MyButton, &Global
 }
 
 fn spawn_level_up_ui(mut commands: Commands) {
+    let level_up_parent = NodeBundle {
+        style: Style {
+            size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+            position_type: PositionType::Absolute,
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::Center,
+            ..default()
+        },
+        ..default()
+    };
     let level_up_popup = NodeBundle {
         style: Style {
             size: Size::new(Val::Percent(80.0), Val::Percent(70.0)),
-            position: UiRect {
-                left: Val::Percent(0.1),
-                right: Val::Auto,
-                top: Val::Percent(0.15),
-                bottom: Val::Auto,
-            },
-            position_type: PositionType::Absolute,
+            position_type: PositionType::Relative,
             align_items: AlignItems::Center,
             justify_content: JustifyContent::Center,
             ..default()
@@ -72,8 +76,10 @@ fn spawn_level_up_ui(mut commands: Commands) {
         },
     );
 
-    commands.spawn(level_up_popup).with_children(|commands| {
-        commands.spawn(button);
+    commands.spawn(level_up_parent).with_children(|commands| {
+        commands.spawn(level_up_popup).with_children(|commands| {
+            commands.spawn(button);
+        });
     });
 }
 
@@ -138,9 +144,9 @@ fn spawn_player_ui(mut commands: Commands) {
                 size: Size::new(Val::Percent(5.0), Val::Percent(2.0)),
                 position: UiRect {
                     //Player is always centered
-                    left: Val::Percent(45.0),
+                    left: Val::Percent(47.5),
                     right: Val::Auto,
-                    top: Val::Px(55.0),
+                    top: Val::Percent(55.0),
                     bottom: Val::Auto,
                 },
                 align_items: AlignItems::Center,
