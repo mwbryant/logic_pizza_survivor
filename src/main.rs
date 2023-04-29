@@ -29,7 +29,13 @@ fn main() {
         .add_plugin(RngPlugin::default())
         //.add_plugin(RapierDebugRenderPlugin::default())
         .insert_resource(WaveManager {
-            next_spawn: Timer::from_seconds(0.5, TimerMode::Repeating),
+            next_spawn: Timer::from_seconds(0.9, TimerMode::Repeating),
+            wave_size: 1,
+            to_spawn: Enemy {
+                speed: 1.3,
+                health: 5.0,
+                damage_per_second: 10.0,
+            },
         })
         .add_state::<GameState>()
         .add_plugin(ExpPlugin)
@@ -37,5 +43,6 @@ fn main() {
         .add_plugin(GameUiPlugin)
         .add_plugin(PlayerPlugin)
         .add_plugin(EnemyPlugin)
+        .add_plugin(UpgradePlugin)
         .run();
 }

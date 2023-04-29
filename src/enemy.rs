@@ -9,10 +9,29 @@ impl Plugin for EnemyPlugin {
                 enemy_death_check,
                 enemy_movement,
                 spawn_enemy,
+                despawn_enemy,
                 enemy_damage_player.after(enemy_movement),
             )
                 .in_set(OnUpdate(GameState::Gameplay)),
         );
+    }
+}
+
+fn despawn_enemy(
+    mut commands: Commands,
+    player: Query<&Transform, (With<Player>, Without<Enemy>)>,
+    enemy: Query<(Entity, &Transform), With<Enemy>>,
+) {
+    let player = player.single();
+
+    for (enemy, transform) in &enemy {
+        if Vec2::distance(
+            player.translation.truncate(),
+            transform.translation.truncate(),
+        ) > 21.0
+        {
+            commands.entity(enemy).despawn_recursive();
+        }
     }
 }
 
@@ -27,7 +46,7 @@ fn spawn_enemy(
     wave_manager.next_spawn.tick(time.delta());
 
     if wave_manager.next_spawn.just_finished() {
-        for i in 0..2 {
+        for _i in 0..wave_manager.wave_size {
             // XXX is always off screen?
             let target_direction = 20.0
                 * Vec2::new(global_rng.f32_normalized(), global_rng.f32_normalized()).normalize();
@@ -50,11 +69,7 @@ fn spawn_enemy(
                     transform: Transform::from_translation(target_translation),
                     ..default()
                 },
-                Enemy {
-                    speed: 2.0,
-                    health: 5.0,
-                    damage_per_second: 10.0,
-                },
+                wave_manager.to_spawn.clone(),
                 Name::new("Enemy"),
                 RngComponent::from(&mut global_rng),
                 RigidBody::Dynamic,

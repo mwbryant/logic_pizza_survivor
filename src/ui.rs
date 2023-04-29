@@ -6,81 +6,119 @@ impl Plugin for GameUiPlugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(spawn_header_ui)
             .add_startup_system(spawn_player_ui)
-            //.add_startup_system(spawn_level_up_ui)
+            .add_system(spawn_level_up_ui.in_schedule(OnEnter(GameState::LevelUp)))
+            .add_system(despawn_level_up_ui.in_schedule(OnExit(GameState::LevelUp)))
             .add_system(button_system)
             .add_system(player_health_ui_sync)
             .add_system(player_exp_ui_sync);
     }
 }
 
-#[derive(Component)]
-pub struct MyButton {
-    size: Vec2,
-}
-
-fn button_system(cursor: Res<CursorPosition>, buttons: Query<(&MyButton, &GlobalTransform)>) {
-    for (button, transform) in &buttons {
-        let position = transform.translation().truncate() / Vec2::new(RENDER_WIDTH, RENDER_HEIGHT);
-        if bevy::sprite::collide_aabb::collide(
-            position.extend(0.0),
-            button.size,
-            cursor.screen_position.extend(0.0),
-            Vec2::splat(0.01),
-        )
-        .is_some()
-        {
-            info!("On button");
-        } else {
-            info!("Off button");
+fn button_system(
+    mut interaction_query: Query<
+        (&Interaction, &mut BackgroundColor, &WeaponUpgrade),
+        With<Button>,
+    >,
+    mut upgrade_event: EventWriter<UpgradeSelected>,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    for (interaction, mut color, weapon) in &mut interaction_query {
+        match *interaction {
+            Interaction::Clicked => {
+                *color = Color::RED.into();
+                next_state.set(GameState::Gameplay);
+                upgrade_event.send(UpgradeSelected(weapon.clone()));
+            }
+            Interaction::Hovered => {
+                *color = Color::GREEN.into();
+            }
+            Interaction::None => {
+                *color = Color::DARK_GREEN.into();
+            }
         }
     }
 }
 
-fn spawn_level_up_ui(mut commands: Commands) {
-    let level_up_parent = NodeBundle {
-        style: Style {
-            size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
-            position_type: PositionType::Absolute,
-            align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
+fn despawn_level_up_ui(mut commands: Commands, ui: Query<Entity, With<LevelUpUI>>) {
+    for ui in &ui {
+        commands.entity(ui).despawn_recursive();
+    }
+}
+
+fn spawn_level_up_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
+    let level_up_parent = (
+        NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                position_type: PositionType::Absolute,
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                ..default()
+            },
             ..default()
         },
-        ..default()
-    };
+        LevelUpUI,
+    );
+
     let level_up_popup = NodeBundle {
         style: Style {
             size: Size::new(Val::Percent(80.0), Val::Percent(70.0)),
             position_type: PositionType::Relative,
             align_items: AlignItems::Center,
-            justify_content: JustifyContent::Center,
+            flex_direction: FlexDirection::Column,
+            justify_content: JustifyContent::SpaceAround,
             ..default()
         },
-        background_color: Color::AQUAMARINE.into(),
+        background_color: Color::DARK_GRAY.into(),
         ..default()
     };
 
+    commands.spawn(level_up_parent).with_children(|commands| {
+        commands.spawn(level_up_popup).with_children(|commands| {
+            spawn_button(commands, &asset_server, &WeaponUpgrade::HealthUp);
+            spawn_button(commands, &asset_server, &WeaponUpgrade::SpeedUp);
+            spawn_button(commands, &asset_server, &WeaponUpgrade::Whip);
+        });
+    });
+}
+
+fn spawn_button(
+    commands: &mut ChildBuilder,
+    asset_server: &AssetServer,
+    weapon: &WeaponUpgrade,
+) -> Entity {
+    let font = asset_server.load("fonts/pointfree.ttf");
     let button = (
         ButtonBundle {
             style: Style {
-                size: Size::new(Val::Percent(10.0), Val::Percent(10.0)),
+                size: Size::new(Val::Percent(50.0), Val::Percent(15.0)),
                 justify_content: JustifyContent::Center,
                 align_items: AlignItems::Center,
-                align_self: AlignSelf::FlexEnd,
+                align_self: AlignSelf::Center,
                 ..default()
             },
             background_color: Color::CRIMSON.into(),
             ..default()
         },
-        MyButton {
-            size: Vec2::new(0.1, 0.1),
-        },
+        weapon.clone(),
     );
 
-    commands.spawn(level_up_parent).with_children(|commands| {
-        commands.spawn(level_up_popup).with_children(|commands| {
-            commands.spawn(button);
-        });
-    });
+    let text = weapon.name();
+
+    let button_text = TextBundle::from_section(
+        text,
+        TextStyle {
+            font,
+            font_size: 40.0,
+            color: Color::rgb(0.9, 0.9, 0.9),
+        },
+    );
+    commands
+        .spawn(button)
+        .with_children(|commands| {
+            commands.spawn(button_text);
+        })
+        .id()
 }
 
 fn player_health_ui_sync(mut ui: Query<&mut Style, With<HealthUI>>, player: Query<&Player>) {
@@ -111,7 +149,7 @@ fn spawn_header_ui(mut commands: Commands) {
                 position_type: PositionType::Absolute,
                 ..default()
             },
-            background_color: BackgroundColor(Color::GREEN),
+            background_color: BackgroundColor(Color::DARK_GREEN),
             ..default()
         },
         HeaderBarUI,

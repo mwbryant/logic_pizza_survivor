@@ -8,6 +8,7 @@ impl Plugin for PlayerPlugin {
             (
                 player_movement,
                 player_exp_start_pickup,
+                whip_attack_facing,
                 whip_attack,
                 player_gain_exp,
                 player_level_up,
@@ -70,6 +71,17 @@ fn player_gain_exp(
     }
 }
 
+fn whip_attack_facing(mut whips: Query<&mut Transform, With<Whip>>, player: Query<&Player>) {
+    let player = player.single();
+
+    if let Ok(mut whip) = whips.get_single_mut() {
+        whip.translation = match player.facing {
+            Facing::Left => Vec3::new(-3.5, 0.0, 0.0),
+            Facing::Right => Vec3::new(3.5, 0.0, 0.0),
+        };
+    }
+}
+
 fn whip_attack(
     mut whips: Query<(&Collider, &GlobalTransform, &mut Whip, &mut Visibility)>,
     mut enemy: Query<(&mut Sprite, &mut Enemy)>,
@@ -114,9 +126,10 @@ fn spawn_player(mut commands: Commands) {
                 speed: 3.0,
                 health: 100.0,
                 max_health: 100.0,
+                facing: Facing::Left,
             },
             Name::new("Player"),
-            Collider::ball(1.0),
+            Collider::ball(0.7),
         ))
         .with_children(|commands| {
             commands.spawn((
@@ -141,11 +154,11 @@ fn spawn_player(mut commands: Commands) {
 }
 
 fn player_movement(
-    mut player: Query<(&mut Transform, &Player)>,
+    mut player: Query<(&mut Transform, &mut Player)>,
     input: Res<Input<KeyCode>>,
     time: Res<Time>,
 ) {
-    let (mut transform, player) = player.single_mut();
+    let (mut transform, mut player) = player.single_mut();
     if input.pressed(KeyCode::W) {
         transform.translation.y += time.delta_seconds() * player.speed;
     }
@@ -154,8 +167,10 @@ fn player_movement(
     }
     if input.pressed(KeyCode::A) {
         transform.translation.x -= time.delta_seconds() * player.speed;
+        player.facing = Facing::Left;
     }
     if input.pressed(KeyCode::D) {
         transform.translation.x += time.delta_seconds() * player.speed;
+        player.facing = Facing::Right;
     }
 }

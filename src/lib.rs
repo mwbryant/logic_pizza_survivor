@@ -3,6 +3,7 @@ mod enemy;
 mod exp;
 mod player;
 mod ui;
+mod upgrade;
 
 pub mod prelude {
     pub const WIDTH: f32 = 857.0;
@@ -15,6 +16,7 @@ pub mod prelude {
     pub use crate::exp::ExpPlugin;
     pub use crate::player::PlayerPlugin;
     pub use crate::ui::GameUiPlugin;
+    pub use crate::upgrade::UpgradePlugin;
 
     pub use bevy::prelude::*;
     pub use bevy_rapier2d::prelude::*;
@@ -27,7 +29,7 @@ pub mod prelude {
         LevelUp,
     }
 
-    #[derive(Component)]
+    #[derive(Component, Clone)]
     pub struct Enemy {
         pub speed: f32,
         pub health: f32,
@@ -65,6 +67,9 @@ pub mod prelude {
     pub struct FinalCamera;
 
     #[derive(Component)]
+    pub struct LevelUpUI;
+
+    #[derive(Component)]
     pub struct Player {
         pub exp: i64,
         pub next_level_exp: i64,
@@ -72,12 +77,37 @@ pub mod prelude {
         pub speed: f32,
         pub health: f32,
         pub max_health: f32,
+        pub facing: Facing,
+    }
+
+    pub enum Facing {
+        Left,
+        Right,
     }
 
     #[derive(Component)]
     pub struct Whip {
         pub timer: Timer,
         pub damage: f32,
+    }
+
+    #[derive(Component, Clone)]
+    pub enum WeaponUpgrade {
+        Whip,
+        HealthUp,
+        SpeedUp,
+    }
+
+    pub struct UpgradeSelected(pub WeaponUpgrade);
+
+    impl WeaponUpgrade {
+        pub fn name(&self) -> &str {
+            match self {
+                WeaponUpgrade::Whip => "Whip Upgrade",
+                WeaponUpgrade::HealthUp => "Health Up 10%",
+                WeaponUpgrade::SpeedUp => "Speed Up 10%",
+            }
+        }
     }
 
     #[derive(Component)]
@@ -95,5 +125,7 @@ pub mod prelude {
     #[derive(Resource)]
     pub struct WaveManager {
         pub next_spawn: Timer,
+        pub wave_size: i32,
+        pub to_spawn: Enemy,
     }
 }
