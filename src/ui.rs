@@ -9,9 +9,83 @@ impl Plugin for GameUiPlugin {
             .add_system(spawn_level_up_ui.in_schedule(OnEnter(GameState::LevelUp)))
             .add_system(despawn_level_up_ui.in_schedule(OnExit(GameState::LevelUp)))
             .add_system(button_system)
+            .add_system(update_world_text)
             .add_system(player_health_ui_sync)
             .add_system(player_exp_ui_sync);
     }
+}
+
+fn update_world_text(
+    mut commands: Commands,
+    mut text: Query<(Entity, &mut Style, &mut WorldTextUI)>,
+    main_camera: Query<(&Camera, &GlobalTransform), With<MainCamera>>,
+    render_camera: Query<&Camera, With<FinalCamera>>,
+    time: Res<Time>,
+) {
+    //AHHH
+    let (camera, transform) = main_camera.single();
+    let final_camera = render_camera.single();
+
+    for (entity, mut style, mut world_ui) in &mut text {
+        world_ui.lifetime.tick(time.delta());
+        if world_ui.lifetime.just_finished() {
+            commands.entity(entity).despawn_recursive();
+        }
+
+        world_ui.position = world_ui.position + world_ui.velocity * time.delta_seconds();
+
+        if let Some(coords) = camera.world_to_viewport(transform, world_ui.position.extend(0.0)) {
+            let mut coords = coords / Vec2::new(RENDER_WIDTH, RENDER_HEIGHT)
+                * final_camera.logical_viewport_size().unwrap();
+            coords.y = final_camera.logical_viewport_size().unwrap().y - coords.y;
+
+            style.position = UiRect {
+                top: Val::Px(coords.y),
+                left: Val::Px(coords.x),
+                bottom: Val::Px(coords.y),
+                right: Val::Px(coords.x),
+            }
+        }
+    }
+}
+
+pub fn spawn_world_text(commands: &mut Commands, assets: &AssetServer, position: Vec2, text: &str) {
+    let font = assets.load("fonts/pointfree.ttf");
+
+    //Gross offset because text is at top left of given coords
+    let position = position + Vec2::new(-0.2, 0.7);
+
+    let parent = (
+        NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(20.0), Val::Percent(20.0)),
+                position_type: PositionType::Absolute,
+                align_items: AlignItems::FlexStart,
+                justify_content: JustifyContent::FlexStart,
+                ..default()
+            },
+            z_index: ZIndex::Global(-100),
+            ..default()
+        },
+        WorldTextUI {
+            lifetime: Timer::from_seconds(0.5, TimerMode::Once),
+            velocity: Vec2::new(0.15, 1.0),
+            position,
+        },
+    );
+
+    let text = TextBundle::from_section(
+        text,
+        TextStyle {
+            font,
+            font_size: 32.0,
+            color: Color::rgb(0.9, 0.8, 0.8),
+        },
+    );
+
+    commands.spawn(parent).with_children(|commands| {
+        commands.spawn(text);
+    });
 }
 
 fn button_system(

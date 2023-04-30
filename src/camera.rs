@@ -50,8 +50,8 @@ fn spawn_camera(
     mut images: ResMut<Assets<Image>>,
 ) {
     let size = Extent3d {
-        width: 1920,
-        height: 1080,
+        width: RENDER_WIDTH as u32,
+        height: RENDER_HEIGHT as u32,
         ..default()
     };
 

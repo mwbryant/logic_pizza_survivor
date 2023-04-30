@@ -153,6 +153,13 @@ pub mod prelude {
     #[derive(Component)]
     pub struct HealthUI;
 
+    #[derive(Component)]
+    pub struct WorldTextUI {
+        pub lifetime: Timer,
+        pub velocity: Vec2,
+        pub position: Vec2,
+    }
+
     #[derive(Resource)]
     pub struct WaveManager {
         pub next_spawn: Timer,

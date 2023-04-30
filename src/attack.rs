@@ -1,6 +1,6 @@
 use bevy::utils::FloatOrd;
 
-use crate::prelude::*;
+use crate::{prelude::*, ui::spawn_world_text};
 
 pub struct AttackPlugin;
 
@@ -18,6 +18,24 @@ impl Plugin for AttackPlugin {
                 .in_set(OnUpdate(GameState::Gameplay)),
         );
     }
+}
+
+fn damage_enemy(
+    commands: &mut Commands,
+    //Gross but makes font loading easier
+    assets: &AssetServer,
+    enemy: &mut Enemy,
+    position: &Transform,
+    damage: f32,
+) {
+    spawn_world_text(
+        commands,
+        assets,
+        position.translation.truncate(),
+        &format!("{:?}", damage as i32),
+    );
+
+    enemy.health -= damage;
 }
 
 pub fn spawn_area_shot(commands: &mut Commands) -> Entity {
@@ -59,9 +77,10 @@ pub fn spawn_area_shot_bullet(commands: &mut Commands, spawn_pos: Vec2) -> Entit
 
 fn area_shot_bullet(
     mut commands: Commands,
+    assets: Res<AssetServer>,
     mut bullets: Query<(Entity, &Transform, &Collider, &mut AreaShotBullet)>,
     rapier_context: Res<RapierContext>,
-    mut enemy: Query<&mut Enemy>,
+    mut enemy: Query<(&mut Enemy, &Transform)>,
     time: Res<Time>,
 ) {
     for (bullet_entity, transform, collider, mut bullet) in &mut bullets {
@@ -76,8 +95,14 @@ fn area_shot_bullet(
             collider,
             QueryFilter::new(),
             |entity| {
-                if let Ok(mut enemy) = enemy.get_mut(entity) {
-                    enemy.health -= bullet.damage_per_second * time.delta_seconds();
+                if let Ok((mut enemy, transform)) = enemy.get_mut(entity) {
+                    damage_enemy(
+                        &mut commands,
+                        &assets,
+                        &mut enemy,
+                        transform,
+                        bullet.damage_per_second * time.delta_seconds(),
+                    );
                 }
                 true
             },
@@ -162,9 +187,11 @@ fn whip_attack_facing(mut whips: Query<&mut Transform, With<Whip>>, player: Quer
 
 fn close_shot_bullet(
     mut commands: Commands,
-    mut bullets: Query<(Entity, &mut Transform, &Collider, &mut CloseShotBullet)>,
+    //Gross but makes font loading easier
+    assets: Res<AssetServer>,
+    mut bullets: Query<(Entity, &mut Transform, &Collider, &mut CloseShotBullet), Without<Enemy>>,
     rapier_context: Res<RapierContext>,
-    mut enemy: Query<&mut Enemy>,
+    mut enemy: Query<(&mut Enemy, &Transform)>,
     time: Res<Time>,
 ) {
     for (bullet_entity, mut transform, collider, mut bullet) in &mut bullets {
@@ -181,8 +208,8 @@ fn close_shot_bullet(
             collider,
             QueryFilter::new(),
             |entity| {
-                if let Ok(mut enemy) = enemy.get_mut(entity) {
-                    enemy.health -= bullet.damage;
+                if let Ok((mut enemy, transform)) = enemy.get_mut(entity) {
+                    damage_enemy(&mut commands, &assets, &mut enemy, transform, bullet.damage);
                     commands.entity(bullet_entity).despawn_recursive();
                 }
                 true
@@ -239,8 +266,11 @@ fn area_shot_attack(
 }
 
 fn whip_attack(
+    mut commands: Commands,
+    //Gross but makes font loading easier
+    assets: Res<AssetServer>,
     mut whips: Query<(&Collider, &GlobalTransform, &mut Whip, &mut Visibility)>,
-    mut enemy: Query<(&mut Sprite, &mut Enemy)>,
+    mut enemy: Query<(&mut Enemy, &Transform)>,
     rapier_context: Res<RapierContext>,
     time: Res<Time>,
 ) {
@@ -260,9 +290,8 @@ fn whip_attack(
                 collider,
                 QueryFilter::new(),
                 |entity| {
-                    if let Ok((mut sprite, mut enemy)) = enemy.get_mut(entity) {
-                        sprite.color = Color::PINK;
-                        enemy.health -= whip.damage;
+                    if let Ok((mut enemy, transform)) = enemy.get_mut(entity) {
+                        damage_enemy(&mut commands, &assets, &mut enemy, transform, whip.damage);
                     }
                     true
                 },
