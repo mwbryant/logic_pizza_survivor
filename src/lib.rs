@@ -1,3 +1,4 @@
+mod attack;
 mod camera;
 mod enemy;
 mod exp;
@@ -11,6 +12,7 @@ pub mod prelude {
     pub const RENDER_WIDTH: f32 = 1920.;
     pub const RENDER_HEIGHT: f32 = 1080.;
 
+    pub use crate::attack::AttackPlugin;
     pub use crate::camera::GameCameraPlugin;
     pub use crate::enemy::EnemyPlugin;
     pub use crate::exp::ExpPlugin;
@@ -91,9 +93,35 @@ pub mod prelude {
         pub damage: f32,
     }
 
+    #[derive(Component)]
+    pub struct CloseShot {
+        pub timer: Timer,
+    }
+
+    #[derive(Component)]
+    pub struct CloseShotBullet {
+        pub lifetime: Timer,
+        pub speed: f32,
+        pub damage: f32,
+        pub direction: Vec2,
+    }
+
+    #[derive(Component)]
+    pub struct AreaShot {
+        pub timer: Timer,
+    }
+
+    #[derive(Component)]
+    pub struct AreaShotBullet {
+        pub lifetime: Timer,
+        pub damage_per_second: f32,
+    }
+
     #[derive(Component, Clone)]
     pub enum WeaponUpgrade {
         Whip,
+        CloseShot,
+        AreaShot,
         HealthUp,
         SpeedUp,
     }
@@ -104,6 +132,8 @@ pub mod prelude {
         pub fn name(&self) -> &str {
             match self {
                 WeaponUpgrade::Whip => "Whip Upgrade",
+                WeaponUpgrade::CloseShot => "Close Shot Upgrade",
+                WeaponUpgrade::AreaShot => "Area Shot Upgrade",
                 WeaponUpgrade::HealthUp => "Health Up 10%",
                 WeaponUpgrade::SpeedUp => "Speed Up 10%",
             }

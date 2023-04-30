@@ -27,7 +27,7 @@ fn main() {
             ..default()
         })
         .add_plugin(RngPlugin::default())
-        //.add_plugin(RapierDebugRenderPlugin::default())
+        .add_plugin(RapierDebugRenderPlugin::default())
         .insert_resource(WaveManager {
             next_spawn: Timer::from_seconds(0.9, TimerMode::Repeating),
             wave_size: 1,
@@ -41,8 +41,29 @@ fn main() {
         .add_plugin(UpgradePlugin)
         .add_plugin(ExpPlugin)
         .add_plugin(GameCameraPlugin)
+        .add_plugin(AttackPlugin)
         .add_plugin(GameUiPlugin)
         .add_plugin(PlayerPlugin)
         .add_plugin(EnemyPlugin)
+        .add_startup_system(spawn_background)
         .run();
+}
+
+fn spawn_background(mut commands: Commands, assets: Res<AssetServer>) {
+    for i in -5..5 {
+        for j in -5..5 {
+            commands.spawn((
+                SpriteBundle {
+                    transform: Transform::from_xyz(i as f32 * 10.0, j as f32 * 20.0, 0.0),
+                    sprite: Sprite {
+                        custom_size: Some(Vec2::new(10.0, 20.0)),
+                        ..default()
+                    },
+                    texture: assets.load("background.png"),
+                    ..default()
+                },
+                Name::new("Background"),
+            ));
+        }
+    }
 }

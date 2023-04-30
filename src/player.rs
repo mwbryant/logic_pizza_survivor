@@ -1,4 +1,7 @@
-use crate::{prelude::*, upgrade::spawn_whip};
+use crate::{
+    attack::{spawn_area_shot, spawn_close_shot, spawn_whip},
+    prelude::*,
+};
 
 pub struct PlayerPlugin;
 
@@ -8,8 +11,6 @@ impl Plugin for PlayerPlugin {
             (
                 player_movement,
                 player_exp_start_pickup,
-                whip_attack_facing,
-                whip_attack,
                 player_gain_exp,
                 player_level_up,
             )
@@ -71,55 +72,14 @@ fn player_gain_exp(
     }
 }
 
-fn whip_attack_facing(mut whips: Query<&mut Transform, With<Whip>>, player: Query<&Player>) {
-    let player = player.single();
-
-    if let Ok(mut whip) = whips.get_single_mut() {
-        whip.translation = match player.facing {
-            Facing::Left => Vec3::new(-3.5, 0.0, 0.0),
-            Facing::Right => Vec3::new(3.5, 0.0, 0.0),
-        };
-    }
-}
-
-fn whip_attack(
-    mut whips: Query<(&Collider, &GlobalTransform, &mut Whip, &mut Visibility)>,
-    mut enemy: Query<(&mut Sprite, &mut Enemy)>,
-    rapier_context: Res<RapierContext>,
-    time: Res<Time>,
-) {
-    for (collider, transform, mut whip, mut visibility) in &mut whips {
-        whip.timer.tick(time.delta());
-
-        *visibility = if whip.timer.percent() < 0.1 {
-            Visibility::Visible
-        } else {
-            Visibility::Hidden
-        };
-
-        if whip.timer.just_finished() {
-            rapier_context.intersections_with_shape(
-                transform.translation().truncate(),
-                0.0,
-                collider,
-                QueryFilter::new(),
-                |entity| {
-                    if let Ok((mut sprite, mut enemy)) = enemy.get_mut(entity) {
-                        sprite.color = Color::PINK;
-                        enemy.health -= whip.damage;
-                    }
-                    true
-                },
-            );
-        }
-    }
-}
-
 fn spawn_player(mut commands: Commands) {
-    let whip = spawn_whip(&mut commands);
+    let whip = spawn_area_shot(&mut commands);
     commands
         .spawn((
-            SpriteBundle::default(),
+            SpriteBundle {
+                transform: Transform::from_xyz(0.0, 0.0, 100.0),
+                ..default()
+            },
             Player {
                 exp: 0,
                 next_level_exp: 5,
