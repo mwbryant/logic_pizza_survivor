@@ -44,8 +44,9 @@ fn apply_whip_upgrade(
 ) {
     let player = player.single();
 
-    for _upgrade in reader.iter() {
-        if matches!(UpgradeSelected(WeaponUpgrade::Whip), _upgrade) {
+    for upgrade in reader.iter() {
+        if &UpgradeSelected(WeaponUpgrade::Whip) == upgrade {
+            info!("Upgrade whip");
             // Spawn Whip 1
             if whips.iter().count() == 0 {
                 let whip_1 = spawn_whip(&mut commands);
@@ -78,8 +79,8 @@ fn apply_close_shot_upgrade(
 ) {
     let player = player.single();
 
-    for _upgrade in reader.iter() {
-        if matches!(UpgradeSelected(WeaponUpgrade::CloseShot), _upgrade) {
+    for upgrade in reader.iter() {
+        if &UpgradeSelected(WeaponUpgrade::CloseShot) == upgrade {
             // Spawn new close shot
             let close_shot = spawn_close_shot(&mut commands);
             commands.entity(player).add_child(close_shot);
@@ -96,8 +97,8 @@ fn apply_area_shot_upgrade(
 ) {
     let player = player.single();
 
-    for _upgrade in reader.iter() {
-        if matches!(UpgradeSelected(WeaponUpgrade::AreaShot), _upgrade) {
+    for upgrade in reader.iter() {
+        if &UpgradeSelected(WeaponUpgrade::AreaShot) == upgrade {
             // Spawn new close shot
             let area_shot = spawn_area_shot(&mut commands);
             commands.entity(player).add_child(area_shot);

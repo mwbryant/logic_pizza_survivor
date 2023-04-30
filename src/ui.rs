@@ -75,8 +75,8 @@ fn spawn_level_up_ui(mut commands: Commands, asset_server: Res<AssetServer>) {
 
     commands.spawn(level_up_parent).with_children(|commands| {
         commands.spawn(level_up_popup).with_children(|commands| {
-            spawn_button(commands, &asset_server, &WeaponUpgrade::HealthUp);
-            spawn_button(commands, &asset_server, &WeaponUpgrade::SpeedUp);
+            spawn_button(commands, &asset_server, &WeaponUpgrade::CloseShot);
+            spawn_button(commands, &asset_server, &WeaponUpgrade::AreaShot);
             spawn_button(commands, &asset_server, &WeaponUpgrade::Whip);
         });
     });

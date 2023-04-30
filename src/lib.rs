@@ -117,7 +117,7 @@ pub mod prelude {
         pub damage_per_second: f32,
     }
 
-    #[derive(Component, Clone)]
+    #[derive(Component, Clone, PartialEq, Eq)]
     pub enum WeaponUpgrade {
         Whip,
         CloseShot,
@@ -126,6 +126,7 @@ pub mod prelude {
         SpeedUp,
     }
 
+    #[derive(PartialEq, Eq)]
     pub struct UpgradeSelected(pub WeaponUpgrade);
 
     impl WeaponUpgrade {

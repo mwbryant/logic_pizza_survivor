@@ -27,10 +27,10 @@ fn main() {
             ..default()
         })
         .add_plugin(RngPlugin::default())
-        .add_plugin(RapierDebugRenderPlugin::default())
+        //.add_plugin(RapierDebugRenderPlugin::default())
         .insert_resource(WaveManager {
             next_spawn: Timer::from_seconds(0.9, TimerMode::Repeating),
-            wave_size: 1,
+            wave_size: 3,
             to_spawn: Enemy {
                 speed: 1.3,
                 health: 5.0,
