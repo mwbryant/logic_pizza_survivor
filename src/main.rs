@@ -38,11 +38,11 @@ fn main() {
             },
         })
         .add_state::<GameState>()
+        .add_plugin(UpgradePlugin)
         .add_plugin(ExpPlugin)
         .add_plugin(GameCameraPlugin)
         .add_plugin(GameUiPlugin)
         .add_plugin(PlayerPlugin)
         .add_plugin(EnemyPlugin)
-        .add_plugin(UpgradePlugin)
         .run();
 }

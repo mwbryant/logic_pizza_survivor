@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, upgrade::spawn_whip};
 
 pub struct PlayerPlugin;
 
@@ -116,6 +116,7 @@ fn whip_attack(
 }
 
 fn spawn_player(mut commands: Commands) {
+    let whip = spawn_whip(&mut commands);
     commands
         .spawn((
             SpriteBundle::default(),
@@ -131,26 +132,7 @@ fn spawn_player(mut commands: Commands) {
             Name::new("Player"),
             Collider::ball(0.7),
         ))
-        .with_children(|commands| {
-            commands.spawn((
-                SpriteBundle {
-                    transform: Transform::from_xyz(3.5, 0.0, 0.0),
-                    sprite: Sprite {
-                        color: Color::BLUE,
-                        custom_size: Some(Vec2::new(4.0, 0.6)),
-                        ..default()
-                    },
-                    ..default()
-                },
-                Name::new("Whip"),
-                Whip {
-                    timer: Timer::from_seconds(2.0, TimerMode::Repeating),
-                    damage: 5.0,
-                },
-                Sensor,
-                Collider::cuboid(2.0, 0.3),
-            ));
-        });
+        .add_child(whip);
 }
 
 fn player_movement(
