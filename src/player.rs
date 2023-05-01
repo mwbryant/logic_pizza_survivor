@@ -139,4 +139,6 @@ pub fn player_movement(
         sprite.flip_x = true;
         player.facing = Facing::Right;
     }
+    transform.translation.x = transform.translation.x.clamp(-175.0, 175.0);
+    transform.translation.y = transform.translation.y.clamp(-175.0, 175.0);
 }

@@ -52,13 +52,14 @@ fn spawn_enemy(
     let wave_buf = current_wave / wave_manager.waves.len();
 
     let wave = &mut wave_manager.waves[wave_index];
+    let size = (wave.wave_size as f32 * 1.3_f32.powf(wave_buf as f32)) as i32;
 
     wave.next_spawn.tick(time.delta());
 
     if wave.next_spawn.just_finished() {
-        for _i in 0..wave.wave_size {
+        for _i in 0..size {
             // XXX is always off screen?
-            let target_direction = 20.0
+            let target_direction = 25.0
                 * Vec2::new(global_rng.f32_normalized(), global_rng.f32_normalized()).normalize();
 
             let mut target_translation = target_direction.extend(100.0)
@@ -70,8 +71,8 @@ fn spawn_enemy(
                 );
 
             let mut enemy = wave.to_spawn.clone();
-            enemy.speed *= 1.1_f32.powf(wave_buf as f32);
-            enemy.health *= 1.1_f32.powf(wave_buf as f32);
+            enemy.speed *= 1.3_f32.powf(wave_buf as f32);
+            enemy.health *= 1.3_f32.powf(wave_buf as f32);
 
             target_translation += player_transform.translation.truncate().extend(0.0);
             commands.spawn((
@@ -94,7 +95,7 @@ fn spawn_enemy(
                     angular_damping: 1.0,
                 },
                 GamePlayEntity,
-                Collider::capsule(Vec2::new(0.0, 0.45), Vec2::new(0.0, -0.45), 0.7),
+                Collider::capsule(Vec2::new(0.0, 0.55), Vec2::new(0.0, -0.55), 0.8),
             ));
         }
     }

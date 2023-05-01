@@ -28,7 +28,7 @@ fn apply_player_upgrade(mut reader: EventReader<UpgradeSelected>, mut player: Qu
     for upgrade in reader.iter() {
         match upgrade.0 {
             WeaponUpgrade::HealthUp => {
-                let increase = player.max_health * 0.10;
+                let increase = player.max_health * 0.15;
                 player.health += increase;
                 player.max_health += increase;
             }
@@ -70,7 +70,7 @@ fn apply_whip_upgrade(
             //Already has 2 whips, just buff damage
             } else {
                 for (mut whip, _, _) in &mut whips {
-                    whip.damage *= 1.10;
+                    whip.damage *= 1.25;
                 }
             }
         }

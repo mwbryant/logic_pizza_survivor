@@ -449,7 +449,7 @@ fn spawn_main_menu_ui(mut commands: Commands, assets: Res<AssetServer>) {
     let menu_parent = (
         NodeBundle {
             style: Style {
-                size: Size::new(Val::Percent(50.0), Val::Percent(32.0)),
+                size: Size::new(Val::Percent(38.0), Val::Percent(32.0)),
                 position: UiRect {
                     left: Val::Percent(47.0),
                     right: Val::Auto,
@@ -539,7 +539,7 @@ fn spawn_main_menu_ui(mut commands: Commands, assets: Res<AssetServer>) {
     commands.spawn((
         SpriteBundle {
             transform: Transform::from_xyz(0.0, 0.0, 100.0),
-            texture: assets.load("Menu.png"),
+            texture: assets.load("Menu2.png"),
             sprite: Sprite {
                 custom_size: Some(Vec2::new(
                     333.0 * PIXEL_TO_WORLD * 3.86,

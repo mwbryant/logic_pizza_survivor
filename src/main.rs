@@ -37,12 +37,12 @@ fn main() {
                     to_spawn: Enemy {
                         speed: 1.3,
                         health: 5.0,
-                        asset: "sorority_1.png".to_string(),
+                        asset: "student_1.png".to_string(),
                         damage_per_second: 10.0,
                     },
                 },
                 Wave {
-                    next_spawn: Timer::from_seconds(0.3, TimerMode::Repeating),
+                    next_spawn: Timer::from_seconds(0.5, TimerMode::Repeating),
                     wave_size: 2,
                     to_spawn: Enemy {
                         speed: 2.2,
@@ -59,6 +59,16 @@ fn main() {
                         health: 30.0,
                         asset: "sorority_1.png".to_string(),
                         damage_per_second: 10.0,
+                    },
+                },
+                Wave {
+                    next_spawn: Timer::from_seconds(5.0, TimerMode::Repeating),
+                    wave_size: 8,
+                    to_spawn: Enemy {
+                        speed: 2.3,
+                        health: 5.0,
+                        asset: "student_2.png".to_string(),
+                        damage_per_second: 1.0,
                     },
                 },
             ],
@@ -91,8 +101,8 @@ fn despawn_game_play(mut commands: Commands, entities: Query<Entity, With<GamePl
 
 fn spawn_background(mut commands: Commands, assets: Res<AssetServer>) {
     let size = 1080.0 * PIXEL_TO_WORLD;
-    for i in -5..5 {
-        for j in -5..5 {
+    for i in -7..7 {
+        for j in -7..7 {
             commands.spawn((
                 SpriteBundle {
                     transform: Transform::from_xyz(i as f32 * size, j as f32 * size, 0.0),
