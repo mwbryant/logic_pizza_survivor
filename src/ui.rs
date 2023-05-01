@@ -7,11 +7,14 @@ impl Plugin for GameUiPlugin {
         app.add_system(spawn_header_ui.in_schedule(OnEnter(GameState::StartingLoop)))
             .add_system(spawn_player_ui.in_schedule(OnEnter(GameState::StartingLoop)))
             .add_system(spawn_level_up_ui.in_schedule(OnEnter(GameState::LevelUp)))
-            .add_system(spawn_main_menu_ui.in_schedule(OnEnter(GameState::MainMenu)))
             .add_system(despawn_level_up_ui.in_schedule(OnExit(GameState::LevelUp)))
+            .add_system(spawn_main_menu_ui.in_schedule(OnEnter(GameState::MainMenu)))
             .add_system(despawn_main_menu_ui.in_schedule(OnExit(GameState::MainMenu)))
+            .add_system(spawn_game_over_ui.in_schedule(OnEnter(GameState::GameOver)))
+            .add_system(despawn_game_over_ui.in_schedule(OnExit(GameState::GameOver)))
             .add_system(level_up_button_system)
             .add_system(start_button_system)
+            .add_system(game_over_button_system)
             .add_system(update_world_text)
             .add_systems(
                 (player_health_ui_sync, player_exp_ui_sync).in_set(OnUpdate(GameState::Gameplay)),
@@ -57,7 +60,7 @@ pub fn spawn_world_text(commands: &mut Commands, assets: &AssetServer, position:
     let font = assets.load("fonts/pointfree.ttf");
 
     //Gross offset because text is at top left of given coords
-    let position = position + Vec2::new(-0.2, 0.7);
+    let position = position + Vec2::new(-0.2, 1.4);
 
     let parent = (
         NodeBundle {
@@ -73,7 +76,7 @@ pub fn spawn_world_text(commands: &mut Commands, assets: &AssetServer, position:
         },
         WorldTextUI {
             lifetime: Timer::from_seconds(0.5, TimerMode::Once),
-            velocity: Vec2::new(0.15, 1.0),
+            velocity: Vec2::new(0.15, 1.5),
             position,
         },
     );
@@ -140,6 +143,29 @@ fn start_button_system(
     }
 }
 
+fn game_over_button_system(
+    mut interaction_query: Query<
+        (&Interaction, &mut BackgroundColor),
+        (With<Button>, With<GameOverButtonUI>),
+    >,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    for (interaction, mut color) in &mut interaction_query {
+        match *interaction {
+            Interaction::Clicked => {
+                *color = Color::RED.into();
+                next_state.set(GameState::MainMenu);
+            }
+            Interaction::Hovered => {
+                *color = Color::GREEN.into();
+            }
+            Interaction::None => {
+                *color = Color::DARK_GREEN.into();
+            }
+        }
+    }
+}
+
 fn despawn_level_up_ui(mut commands: Commands, ui: Query<Entity, With<LevelUpUI>>) {
     for ui in &ui {
         commands.entity(ui).despawn_recursive();
@@ -147,6 +173,12 @@ fn despawn_level_up_ui(mut commands: Commands, ui: Query<Entity, With<LevelUpUI>
 }
 
 fn despawn_main_menu_ui(mut commands: Commands, ui: Query<Entity, With<MainMenuUI>>) {
+    for ui in &ui {
+        commands.entity(ui).despawn_recursive();
+    }
+}
+
+fn despawn_game_over_ui(mut commands: Commands, ui: Query<Entity, With<GameOverUI>>) {
     for ui in &ui {
         commands.entity(ui).despawn_recursive();
     }
@@ -259,6 +291,7 @@ fn spawn_header_ui(mut commands: Commands) {
             background_color: BackgroundColor(Color::DARK_GREEN),
             ..default()
         },
+        GamePlayEntity,
         HeaderBarUI,
         Name::new("Header Bar UI"),
     );
@@ -303,6 +336,7 @@ fn spawn_player_ui(mut commands: Commands) {
             background_color: BackgroundColor(Color::BLACK),
             ..default()
         },
+        GamePlayEntity,
         PlayerUI,
         Name::new("Player UI"),
     );
@@ -420,4 +454,79 @@ fn spawn_main_menu_ui(mut commands: Commands, assets: Res<AssetServer>) {
         },
         MainMenuUI,
     ));
+}
+
+fn spawn_game_over_ui(mut commands: Commands, assets: Res<AssetServer>) {
+    let font = assets.load("fonts/pointfree.ttf");
+
+    let menu_parent = (
+        NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                position_type: PositionType::Absolute,
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::Center,
+                padding: UiRect::left(Val::Percent(3.0)),
+                ..default()
+            },
+            ..default()
+        },
+        GameOverUI,
+    );
+
+    let menu_title = NodeBundle {
+        style: Style {
+            size: Size::new(Val::Percent(70.0), Val::Percent(60.0)),
+            position_type: PositionType::Relative,
+            align_items: AlignItems::Center,
+            flex_direction: FlexDirection::Column,
+            justify_content: JustifyContent::SpaceAround,
+            ..default()
+        },
+        background_color: Color::DARK_GRAY.into(),
+        ..default()
+    };
+
+    let button = (
+        ButtonBundle {
+            style: Style {
+                size: Size::new(Val::Percent(50.0), Val::Percent(15.0)),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                align_self: AlignSelf::Center,
+                ..default()
+            },
+
+            background_color: Color::CRIMSON.into(),
+            ..default()
+        },
+        GameOverButtonUI,
+    );
+
+    let title_text = TextBundle::from_section(
+        "Game Over!",
+        TextStyle {
+            font: font.clone(),
+            font_size: 64.0,
+            color: Color::rgb(0.9, 0.9, 0.9),
+        },
+    );
+
+    let button_text = TextBundle::from_section(
+        "Back to Menu",
+        TextStyle {
+            font,
+            font_size: 40.0,
+            color: Color::rgb(0.9, 0.9, 0.9),
+        },
+    );
+
+    commands.spawn(menu_parent).with_children(|commands| {
+        commands.spawn(menu_title).with_children(|commands| {
+            commands.spawn(title_text);
+            commands.spawn(button).with_children(|commands| {
+                commands.spawn(button_text);
+            });
+        });
+    });
 }

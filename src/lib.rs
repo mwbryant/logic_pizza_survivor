@@ -24,6 +24,7 @@ pub mod prelude {
     pub use crate::upgrade::UpgradePlugin;
 
     pub use bevy::prelude::*;
+    use bevy::time::Stopwatch;
     pub use bevy_rapier2d::prelude::*;
     pub use bevy_turborand::prelude::*;
 
@@ -55,6 +56,7 @@ pub mod prelude {
         pub sprite: SpriteBundle,
         pub exp_orb: ExpOrb,
         pub collider: Collider,
+        pub game_play: GamePlayEntity,
         pub sensor: Sensor,
     }
 
@@ -127,6 +129,7 @@ pub mod prelude {
 
     #[derive(Component)]
     pub struct AreaShotBullet {
+        pub timer: Timer,
         pub lifetime: Timer,
         pub damage_per_second: f32,
     }
@@ -171,7 +174,16 @@ pub mod prelude {
     pub struct MainMenuUI;
 
     #[derive(Component)]
+    pub struct GameOverUI;
+
+    #[derive(Component)]
     pub struct StartButtonUI;
+
+    #[derive(Component)]
+    pub struct GamePlayEntity;
+
+    #[derive(Component)]
+    pub struct GameOverButtonUI;
 
     #[derive(Component)]
     pub struct WorldTextUI {
@@ -182,6 +194,11 @@ pub mod prelude {
 
     #[derive(Resource)]
     pub struct WaveManager {
+        pub global_time: Stopwatch,
+        pub waves: Vec<Wave>,
+    }
+
+    pub struct Wave {
         pub next_spawn: Timer,
         pub wave_size: i32,
         pub to_spawn: Enemy,

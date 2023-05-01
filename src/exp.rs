@@ -25,6 +25,7 @@ impl Default for ExpOrbBundle {
                 collection_speed: 5.0,
                 collecting: false,
             },
+            game_play: GamePlayEntity,
             collider: Collider::ball(1.0),
             sensor: Sensor,
         }

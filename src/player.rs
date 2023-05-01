@@ -14,9 +14,18 @@ impl Plugin for PlayerPlugin {
                     player_exp_start_pickup,
                     player_gain_exp,
                     player_level_up,
+                    player_game_over,
                 )
                     .in_set(OnUpdate(GameState::Gameplay)),
             );
+    }
+}
+
+fn player_game_over(player: Query<&Player>, mut game_state: ResMut<NextState<GameState>>) {
+    let player = player.single();
+
+    if player.health <= 0.0 {
+        game_state.set(GameState::GameOver);
     }
 }
 
@@ -105,6 +114,7 @@ fn spawn_player(mut commands: Commands, assets: Res<AssetServer>) {
             },
             Name::new("Player"),
             Collider::ball(0.9),
+            GamePlayEntity,
         ))
         .add_child(whip)
         .add_child(close)

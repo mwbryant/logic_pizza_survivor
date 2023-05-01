@@ -43,10 +43,19 @@ fn spawn_enemy(
     time: Res<Time>,
 ) {
     let player_transform = player.single();
-    wave_manager.next_spawn.tick(time.delta());
 
-    if wave_manager.next_spawn.just_finished() {
-        for _i in 0..wave_manager.wave_size {
+    wave_manager.global_time.tick(time.delta());
+
+    let current_wave = (wave_manager.global_time.elapsed_secs() / 30.0) as usize;
+    let wave_index = current_wave % wave_manager.waves.len();
+    let wave_buf = current_wave / wave_manager.waves.len();
+
+    let wave = &mut wave_manager.waves[wave_index];
+
+    wave.next_spawn.tick(time.delta());
+
+    if wave.next_spawn.just_finished() {
+        for _i in 0..wave.wave_size {
             // XXX is always off screen?
             let target_direction = 20.0
                 * Vec2::new(global_rng.f32_normalized(), global_rng.f32_normalized()).normalize();
@@ -69,7 +78,7 @@ fn spawn_enemy(
                     transform: Transform::from_translation(target_translation),
                     ..default()
                 },
-                wave_manager.to_spawn.clone(),
+                wave.to_spawn.clone(),
                 Name::new("Enemy"),
                 RngComponent::from(&mut global_rng),
                 RigidBody::Dynamic,
@@ -78,6 +87,7 @@ fn spawn_enemy(
                     linear_damping: 100.0,
                     angular_damping: 1.0,
                 },
+                GamePlayEntity,
                 Collider::ball(0.8),
             ));
         }

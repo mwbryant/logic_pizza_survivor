@@ -48,6 +48,7 @@ pub fn spawn_area_shot(commands: &mut Commands) -> Entity {
             AreaShot {
                 timer: Timer::from_seconds(2.5, TimerMode::Repeating),
             },
+            GamePlayEntity,
             RngComponent::new(),
         ))
         .id()
@@ -72,10 +73,12 @@ pub fn spawn_area_shot_bullet(
             },
             Name::new("Area Shot Bullet"),
             AreaShotBullet {
+                timer: Timer::from_seconds(0.25, TimerMode::Repeating),
                 lifetime: Timer::from_seconds(8.0, TimerMode::Once),
-                damage_per_second: 2.0,
+                damage_per_second: 4.1,
             },
             Sensor,
+            GamePlayEntity,
             Collider::ball(1.5),
         ))
         .id()
@@ -95,24 +98,27 @@ fn area_shot_bullet(
             commands.entity(bullet_entity).despawn_recursive();
         }
 
-        rapier_context.intersections_with_shape(
-            transform.translation.truncate(),
-            0.0,
-            collider,
-            QueryFilter::new(),
-            |entity| {
-                if let Ok((mut enemy, transform)) = enemy.get_mut(entity) {
-                    damage_enemy(
-                        &mut commands,
-                        &assets,
-                        &mut enemy,
-                        transform,
-                        bullet.damage_per_second * time.delta_seconds(),
-                    );
-                }
-                true
-            },
-        );
+        bullet.timer.tick(time.delta());
+        if bullet.timer.just_finished() {
+            rapier_context.intersections_with_shape(
+                transform.translation.truncate(),
+                0.0,
+                collider,
+                QueryFilter::new(),
+                |entity| {
+                    if let Ok((mut enemy, transform)) = enemy.get_mut(entity) {
+                        damage_enemy(
+                            &mut commands,
+                            &assets,
+                            &mut enemy,
+                            transform,
+                            bullet.damage_per_second * bullet.timer.duration().as_secs_f32(),
+                        );
+                    }
+                    true
+                },
+            );
+        }
     }
 }
 
@@ -169,6 +175,7 @@ pub fn spawn_whip(commands: &mut Commands, assets: &AssetServer) -> Entity {
                 },
                 ..default()
             },
+            GamePlayEntity,
             Name::new("Whip"),
             Whip {
                 timer: Timer::from_seconds(2.0, TimerMode::Repeating),
@@ -180,7 +187,7 @@ pub fn spawn_whip(commands: &mut Commands, assets: &AssetServer) -> Entity {
         .id()
 }
 
-fn whip_attack_facing(mut whips: Query<&mut Transform, With<Whip>>, player: Query<&Player>) {
+pub fn whip_attack_facing(mut whips: Query<&mut Transform, With<Whip>>, player: Query<&Player>) {
     let player = player.single();
 
     if let Ok(mut whip) = whips.get_single_mut() {

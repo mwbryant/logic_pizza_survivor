@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crate::{
-    attack::{spawn_area_shot, spawn_close_shot, spawn_whip},
+    attack::{spawn_area_shot, spawn_close_shot, spawn_whip, whip_attack_facing},
     prelude::*,
 };
 
@@ -12,7 +12,7 @@ impl Plugin for UpgradePlugin {
         app.add_systems(
             (
                 apply_player_upgrade,
-                apply_whip_upgrade,
+                apply_whip_upgrade.after(whip_attack_facing),
                 apply_area_shot_upgrade,
                 apply_close_shot_upgrade,
             )
