@@ -258,7 +258,7 @@ fn spawn_player_ui(mut commands: Commands) {
                     //Player is always centered
                     left: Val::Percent(47.5),
                     right: Val::Auto,
-                    top: Val::Percent(55.0),
+                    top: Val::Percent(60.0),
                     bottom: Val::Auto,
                 },
                 align_items: AlignItems::Center,

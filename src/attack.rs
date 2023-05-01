@@ -76,7 +76,7 @@ pub fn spawn_area_shot_bullet(
                 damage_per_second: 2.0,
             },
             Sensor,
-            Collider::ball(1.25),
+            Collider::ball(1.5),
         ))
         .id()
 }
@@ -148,7 +148,7 @@ pub fn spawn_close_shot_bullet(
             CloseShotBullet {
                 lifetime: Timer::from_seconds(5.0, TimerMode::Once),
                 damage: 2.0,
-                speed: 3.5,
+                speed: 4.5,
                 direction,
             },
             Sensor,

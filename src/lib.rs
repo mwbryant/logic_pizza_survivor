@@ -1,3 +1,4 @@
+mod animation;
 mod attack;
 mod camera;
 mod enemy;
@@ -13,6 +14,7 @@ pub mod prelude {
     pub const RENDER_HEIGHT: f32 = 1080.;
     pub const PIXEL_TO_WORLD: f32 = 30. / 1080.;
 
+    pub use crate::animation::GameAnimationPlugin;
     pub use crate::attack::AttackPlugin;
     pub use crate::camera::GameCameraPlugin;
     pub use crate::enemy::EnemyPlugin;
@@ -58,6 +60,14 @@ pub mod prelude {
         pub value: i64,
         pub collection_speed: f32,
         pub collecting: bool,
+    }
+
+    #[derive(Component)]
+    pub struct TwoFrameAnimation {
+        pub frame_1: Handle<Image>,
+        pub frame_2: Handle<Image>,
+        pub current_frame: bool,
+        pub timer: Timer,
     }
 
     #[derive(Resource)]

@@ -87,6 +87,12 @@ fn spawn_player(mut commands: Commands, assets: Res<AssetServer>) {
                 },
                 ..default()
             },
+            TwoFrameAnimation {
+                frame_1: assets.load("player_1.png"),
+                frame_2: assets.load("player_2.png"),
+                current_frame: false,
+                timer: Timer::from_seconds(0.3, TimerMode::Repeating),
+            },
             Player {
                 exp: 0,
                 next_level_exp: 5,
@@ -97,7 +103,7 @@ fn spawn_player(mut commands: Commands, assets: Res<AssetServer>) {
                 facing: Facing::Left,
             },
             Name::new("Player"),
-            Collider::ball(0.7),
+            Collider::ball(0.9),
         ))
         .add_child(whip)
         .add_child(close)
@@ -105,11 +111,11 @@ fn spawn_player(mut commands: Commands, assets: Res<AssetServer>) {
 }
 
 fn player_movement(
-    mut player: Query<(&mut Transform, &mut Player)>,
+    mut player: Query<(&mut Transform, &mut Sprite, &mut Player)>,
     input: Res<Input<KeyCode>>,
     time: Res<Time>,
 ) {
-    let (mut transform, mut player) = player.single_mut();
+    let (mut transform, mut sprite, mut player) = player.single_mut();
     if input.pressed(KeyCode::W) {
         transform.translation.y += time.delta_seconds() * player.speed;
     }
@@ -118,10 +124,12 @@ fn player_movement(
     }
     if input.pressed(KeyCode::A) {
         transform.translation.x -= time.delta_seconds() * player.speed;
+        sprite.flip_x = false;
         player.facing = Facing::Left;
     }
     if input.pressed(KeyCode::D) {
         transform.translation.x += time.delta_seconds() * player.speed;
+        sprite.flip_x = true;
         player.facing = Facing::Right;
     }
 }

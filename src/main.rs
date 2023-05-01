@@ -45,6 +45,7 @@ fn main() {
         .add_plugin(GameCameraPlugin)
         .add_plugin(AttackPlugin)
         .add_plugin(GameUiPlugin)
+        .add_plugin(GameAnimationPlugin)
         .add_plugin(PlayerPlugin)
         .add_plugin(EnemyPlugin)
         .add_startup_system(spawn_background)
