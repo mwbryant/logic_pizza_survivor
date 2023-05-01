@@ -90,7 +90,12 @@ fn spawn_camera(
     camera.projection.scaling_mode = ScalingMode::FixedVertical(20.0);
     camera.camera.target = RenderTarget::Image(image_handle.clone());
 
-    commands.spawn((camera, MainCamera, UiCameraConfig { show_ui: false }));
+    commands.spawn((
+        camera,
+        MainCamera,
+        VisibilityBundle::default(),
+        UiCameraConfig { show_ui: false },
+    ));
 
     let quad_handle = meshes.add(Mesh::from(shape::Quad::new(Vec2::new(16.0, 9.0))));
 

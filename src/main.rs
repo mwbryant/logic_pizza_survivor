@@ -85,7 +85,15 @@ fn main() {
         .add_startup_system(spawn_background)
         .add_system(advance_state.in_set(OnUpdate(GameState::StartingLoop)))
         .add_system(despawn_game_play.in_schedule(OnEnter(GameState::GameOver)))
+        .add_startup_system(spawn_coin_assets)
         .run();
+}
+
+fn spawn_coin_assets(mut commands: Commands, assets: Res<AssetServer>) {
+    commands.insert_resource(CoinAssets {
+        image_1: assets.load("coin_1.png"),
+        image_2: assets.load("coin_2.png"),
+    })
 }
 
 // Just to prevent on enter gameplay getting called every time after level up

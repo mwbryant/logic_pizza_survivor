@@ -28,7 +28,7 @@ fn despawn_enemy(
         if Vec2::distance(
             player.translation.truncate(),
             transform.translation.truncate(),
-        ) > 21.0
+        ) > 30.0
         {
             commands.entity(enemy).despawn_recursive();
         }
@@ -59,7 +59,7 @@ fn spawn_enemy(
     if wave.next_spawn.just_finished() {
         for _i in 0..size {
             // XXX is always off screen?
-            let target_direction = 25.0
+            let target_direction = 22.0
                 * Vec2::new(global_rng.f32_normalized(), global_rng.f32_normalized()).normalize();
 
             let mut target_translation = target_direction.extend(100.0)

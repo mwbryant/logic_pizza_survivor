@@ -9,8 +9,10 @@ mod upgrade;
 
 pub mod prelude {
     use strum_macros::EnumIter;
-    pub const WIDTH: f32 = 857.0;
-    pub const HEIGHT: f32 = 480.0;
+    //pub const WIDTH: f32 = 857.0;
+    //pub const HEIGHT: f32 = 480.0;
+    pub const WIDTH: f32 = 948.0;
+    pub const HEIGHT: f32 = 533.0;
     pub const RENDER_WIDTH: f32 = 1920.;
     pub const RENDER_HEIGHT: f32 = 1080.;
     pub const PIXEL_TO_WORLD: f32 = 30. / 1080.;
@@ -216,5 +218,14 @@ pub mod prelude {
         pub next_spawn: Timer,
         pub wave_size: i32,
         pub to_spawn: Enemy,
+    }
+
+    #[derive(Component)]
+    pub struct LevelUpParticle;
+
+    #[derive(Resource)]
+    pub struct CoinAssets {
+        pub image_1: Handle<Image>,
+        pub image_2: Handle<Image>,
     }
 }

@@ -103,7 +103,7 @@ fn spawn_player(mut commands: Commands, assets: Res<AssetServer>) {
             },
             Player {
                 exp: 0,
-                next_level_exp: 5,
+                next_level_exp: 1,
                 level: 1,
                 speed: 3.0,
                 health: 100.0,
