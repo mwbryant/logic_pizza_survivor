@@ -45,7 +45,7 @@ fn apply_whip_upgrade(
     mut commands: Commands,
     mut reader: EventReader<UpgradeSelected>,
     assets: Res<AssetServer>,
-    mut whips: Query<(&mut Whip, &mut Transform)>,
+    mut whips: Query<(&mut Whip, &mut Sprite, &mut Transform)>,
     player: Query<Entity, With<Player>>,
 ) {
     let player = player.single();
@@ -60,15 +60,16 @@ fn apply_whip_upgrade(
                 return;
             }
             // Spawn Whip 2 and lock whip 1
-            if let Ok((mut whip, mut transform)) = whips.get_single_mut() {
+            if let Ok((mut whip, mut sprite, mut transform)) = whips.get_single_mut() {
                 *transform = Transform::from_xyz(-3.5, 0.0, 0.0);
+                sprite.flip_x = false;
                 whip.timer.set_elapsed(Duration::from_secs_f32(0.3));
 
                 let whip_2 = spawn_whip(&mut commands, &assets);
                 commands.entity(player).add_child(whip_2);
             //Already has 2 whips, just buff damage
             } else {
-                for (mut whip, _) in &mut whips {
+                for (mut whip, _, _) in &mut whips {
                     whip.damage *= 1.10;
                 }
             }

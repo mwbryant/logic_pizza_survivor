@@ -8,6 +8,7 @@ mod ui;
 mod upgrade;
 
 pub mod prelude {
+    use strum_macros::EnumIter;
     pub const WIDTH: f32 = 857.0;
     pub const HEIGHT: f32 = 480.0;
     pub const RENDER_WIDTH: f32 = 1920.;
@@ -42,6 +43,7 @@ pub mod prelude {
     pub struct Enemy {
         pub speed: f32,
         pub health: f32,
+        pub asset: String,
         pub damage_per_second: f32,
     }
 
@@ -134,7 +136,7 @@ pub mod prelude {
         pub damage_per_second: f32,
     }
 
-    #[derive(Component, Clone, PartialEq, Eq)]
+    #[derive(Component, Clone, PartialEq, Eq, EnumIter)]
     pub enum WeaponUpgrade {
         Whip,
         CloseShot,
@@ -149,9 +151,9 @@ pub mod prelude {
     impl WeaponUpgrade {
         pub fn name(&self) -> &str {
             match self {
-                WeaponUpgrade::Whip => "Whip Upgrade",
-                WeaponUpgrade::CloseShot => "Close Shot Upgrade",
-                WeaponUpgrade::AreaShot => "Area Shot Upgrade",
+                WeaponUpgrade::Whip => "Ramen",
+                WeaponUpgrade::CloseShot => "BURRITOS!",
+                WeaponUpgrade::AreaShot => "Nacho Cheese",
                 WeaponUpgrade::HealthUp => "Health Up 10%",
                 WeaponUpgrade::SpeedUp => "Speed Up 10%",
             }
@@ -180,10 +182,19 @@ pub mod prelude {
     pub struct StartButtonUI;
 
     #[derive(Component)]
+    pub struct AboutButtonUI;
+
+    #[derive(Component)]
     pub struct GamePlayEntity;
 
     #[derive(Component)]
     pub struct GameOverButtonUI;
+
+    #[derive(Component)]
+    pub struct AboutUI;
+
+    #[derive(Component)]
+    pub struct AboutBackButton;
 
     #[derive(Component)]
     pub struct WorldTextUI {
@@ -191,6 +202,9 @@ pub mod prelude {
         pub velocity: Vec2,
         pub position: Vec2,
     }
+
+    #[derive(Resource)]
+    pub struct AboutShown(pub bool);
 
     #[derive(Resource)]
     pub struct WaveManager {

@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::{f32::consts::PI, time::Duration};
 
 use bevy::utils::FloatOrd;
 
@@ -128,7 +128,7 @@ pub fn spawn_close_shot(commands: &mut Commands) -> Entity {
             SpatialBundle::default(),
             Name::new("Close Shot"),
             CloseShot {
-                timer: Timer::from_seconds(0.7, TimerMode::Repeating),
+                timer: Timer::from_seconds(1.2, TimerMode::Repeating),
             },
         ))
         .id()
@@ -136,6 +136,7 @@ pub fn spawn_close_shot(commands: &mut Commands) -> Entity {
 
 pub fn spawn_close_shot_bullet(
     commands: &mut Commands,
+    assets: &AssetServer,
     spawn_pos: Vec2,
     direction: Vec2,
 ) -> Entity {
@@ -143,9 +144,9 @@ pub fn spawn_close_shot_bullet(
         .spawn((
             SpriteBundle {
                 transform: Transform::from_xyz(spawn_pos.x, spawn_pos.y, 1.0),
+                texture: assets.load("burrito.png"),
                 sprite: Sprite {
-                    color: Color::ORANGE,
-                    custom_size: Some(Vec2::new(0.2, 0.2)),
+                    custom_size: Some(Vec2::splat(PIXEL_TO_WORLD * 24.0)),
                     ..default()
                 },
                 ..default()
@@ -164,6 +165,9 @@ pub fn spawn_close_shot_bullet(
 }
 
 pub fn spawn_whip(commands: &mut Commands, assets: &AssetServer) -> Entity {
+    let mut timer = Timer::from_seconds(2.0, TimerMode::Repeating);
+    timer.set_elapsed(Duration::from_secs(1));
+
     commands
         .spawn((
             SpriteBundle {
@@ -171,15 +175,20 @@ pub fn spawn_whip(commands: &mut Commands, assets: &AssetServer) -> Entity {
                 texture: assets.load("ramen.png"),
                 sprite: Sprite {
                     custom_size: Some(Vec2::new(156.0 * PIXEL_TO_WORLD, 33.0 * PIXEL_TO_WORLD)),
+                    flip_x: true,
                     ..default()
                 },
                 ..default()
             },
             GamePlayEntity,
             Name::new("Whip"),
-            Whip {
-                timer: Timer::from_seconds(2.0, TimerMode::Repeating),
-                damage: 5.0,
+            Whip { timer, damage: 5.0 },
+            TwoFrameAnimation {
+                frame_1: assets.load("ramen.png"),
+                frame_2: assets.load("ramen_2.png"),
+                current_frame: false,
+                //Jank
+                timer: Timer::from_seconds(10000.0, TimerMode::Repeating),
             },
             Sensor,
             Collider::cuboid(156.0 * PIXEL_TO_WORLD / 2.0, 33.0 * PIXEL_TO_WORLD / 2.0),
@@ -187,13 +196,22 @@ pub fn spawn_whip(commands: &mut Commands, assets: &AssetServer) -> Entity {
         .id()
 }
 
-pub fn whip_attack_facing(mut whips: Query<&mut Transform, With<Whip>>, player: Query<&Player>) {
+pub fn whip_attack_facing(
+    mut whips: Query<(&mut Transform, &mut Sprite), With<Whip>>,
+    player: Query<&Player>,
+) {
     let player = player.single();
 
-    if let Ok(mut whip) = whips.get_single_mut() {
+    if let Ok((mut whip, mut sprite)) = whips.get_single_mut() {
         whip.translation = match player.facing {
-            Facing::Left => Vec3::new(-3.5, 0.0, 0.0),
-            Facing::Right => Vec3::new(3.5, 0.0, 0.0),
+            Facing::Left => {
+                sprite.flip_x = false;
+                Vec3::new(-3.5, 0.0, 0.0)
+            }
+            Facing::Right => {
+                sprite.flip_x = true;
+                Vec3::new(3.5, 0.0, 0.0)
+            }
         };
     }
 }
@@ -233,6 +251,7 @@ fn close_shot_bullet(
 
 fn close_shot_attack(
     mut commands: Commands,
+    assets: Res<AssetServer>,
     mut close_shots: Query<(&GlobalTransform, &mut CloseShot)>,
     enemy: Query<&Transform, With<Enemy>>,
     time: Res<Time>,
@@ -251,6 +270,7 @@ fn close_shot_attack(
 
                 spawn_close_shot_bullet(
                     &mut commands,
+                    &assets,
                     transform.translation().truncate(),
                     direction,
                 );
@@ -284,21 +304,32 @@ fn whip_attack(
     mut commands: Commands,
     //Gross but makes font loading easier
     assets: Res<AssetServer>,
-    mut whips: Query<(&Collider, &GlobalTransform, &mut Whip, &mut Visibility)>,
+    mut whips: Query<(
+        &Collider,
+        &GlobalTransform,
+        &mut Whip,
+        &mut TwoFrameAnimation,
+        &mut Visibility,
+    )>,
     mut enemy: Query<(&mut Enemy, &Transform)>,
     rapier_context: Res<RapierContext>,
     time: Res<Time>,
 ) {
-    for (collider, transform, mut whip, mut visibility) in &mut whips {
+    for (collider, transform, mut whip, mut animation, mut visibility) in &mut whips {
         whip.timer.tick(time.delta());
 
-        *visibility = if whip.timer.percent() < 0.1 {
+        *visibility = if whip.timer.percent() < 0.2 || whip.timer.percent() > 0.9 {
             Visibility::Visible
         } else {
             Visibility::Hidden
         };
 
+        if whip.timer.percent() > 0.5 {
+            animation.current_frame = true;
+        }
+
         if whip.timer.just_finished() {
+            animation.current_frame = false;
             rapier_context.intersections_with_shape(
                 transform.translation().truncate(),
                 0.0,

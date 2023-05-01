@@ -39,6 +39,7 @@ fn spawn_enemy(
     mut commands: Commands,
     mut wave_manager: ResMut<WaveManager>,
     player: Query<&Transform, With<Player>>,
+    assets: Res<AssetServer>,
     mut global_rng: ResMut<GlobalRng>,
     time: Res<Time>,
 ) {
@@ -46,7 +47,7 @@ fn spawn_enemy(
 
     wave_manager.global_time.tick(time.delta());
 
-    let current_wave = (wave_manager.global_time.elapsed_secs() / 30.0) as usize;
+    let current_wave = (wave_manager.global_time.elapsed_secs() / 20.0) as usize;
     let wave_index = current_wave % wave_manager.waves.len();
     let wave_buf = current_wave / wave_manager.waves.len();
 
@@ -68,17 +69,22 @@ fn spawn_enemy(
                     0.0,
                 );
 
+            let mut enemy = wave.to_spawn.clone();
+            enemy.speed *= 1.1_f32.powf(wave_buf as f32);
+            enemy.health *= 1.1_f32.powf(wave_buf as f32);
+
             target_translation += player_transform.translation.truncate().extend(0.0);
             commands.spawn((
                 SpriteBundle {
+                    texture: assets.load(&wave.to_spawn.asset),
                     sprite: Sprite {
-                        color: Color::RED,
+                        custom_size: Some(Vec2::new(63.0 * PIXEL_TO_WORLD, 113.0 * PIXEL_TO_WORLD)),
                         ..default()
                     },
                     transform: Transform::from_translation(target_translation),
                     ..default()
                 },
-                wave.to_spawn.clone(),
+                enemy,
                 Name::new("Enemy"),
                 RngComponent::from(&mut global_rng),
                 RigidBody::Dynamic,
@@ -88,7 +94,7 @@ fn spawn_enemy(
                     angular_damping: 1.0,
                 },
                 GamePlayEntity,
-                Collider::ball(0.8),
+                Collider::capsule(Vec2::new(0.0, 0.45), Vec2::new(0.0, -0.45), 0.7),
             ));
         }
     }
@@ -118,21 +124,23 @@ fn enemy_damage_player(
 
 fn enemy_movement(
     player: Query<&Transform, (With<Player>, Without<Enemy>)>,
-    mut enemy: Query<(&mut Transform, &Enemy)>,
+    mut enemy: Query<(&mut Transform, &mut Sprite, &Enemy)>,
     time: Res<Time>,
 ) {
     let player_transform = player.single();
 
-    for (mut transform, enemy) in &mut enemy {
+    for (mut transform, mut sprite, enemy) in &mut enemy {
         let direction = (transform.translation.truncate()
             - player_transform.translation.truncate())
         .normalize();
+        sprite.flip_x = direction.x < 0.0;
         transform.translation -= (direction * time.delta_seconds() * enemy.speed).extend(0.);
     }
 }
 
 fn enemy_death_check(
     mut commands: Commands,
+    assets: Res<AssetServer>,
     mut enemies: Query<(Entity, &Transform, &Enemy, &mut RngComponent)>,
 ) {
     //TODO dying animation
@@ -143,9 +151,18 @@ fn enemy_death_check(
             //Spawn exp orb (can extract into fn)
             if rng.f32() > 0.5 {
                 let mut orb = ExpOrbBundle::default();
+                orb.sprite.texture = assets.load("coin_1.png");
                 orb.sprite.transform.translation.x = transform.translation.x;
                 orb.sprite.transform.translation.y = transform.translation.y;
-                commands.spawn(orb);
+                commands.spawn((
+                    orb,
+                    TwoFrameAnimation {
+                        frame_1: assets.load("coin_1.png"),
+                        frame_2: assets.load("coin_2.png"),
+                        current_frame: false,
+                        timer: Timer::from_seconds(0.3, TimerMode::Repeating),
+                    },
+                ));
             }
         }
     }

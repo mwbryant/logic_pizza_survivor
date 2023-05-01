@@ -14,14 +14,17 @@ pub fn two_frame_animation(
 ) {
     for (mut animation, mut image) in &mut animated {
         animation.timer.tick(time.delta());
+        if animation.current_frame {
+            *image = animation.frame_2.clone();
+        } else {
+            *image = animation.frame_1.clone();
+        }
 
         if animation.timer.just_finished() {
             if animation.current_frame {
                 animation.current_frame = false;
-                *image = animation.frame_2.clone();
             } else {
                 animation.current_frame = true;
-                *image = animation.frame_1.clone();
             }
         }
     }

@@ -14,8 +14,7 @@ impl Default for ExpOrbBundle {
             sprite: SpriteBundle {
                 transform: Transform::from_xyz(0.0, 0.0, 100.0),
                 sprite: Sprite {
-                    color: Color::ALICE_BLUE,
-                    custom_size: Some(Vec2::new(0.2, 0.2)),
+                    custom_size: Some(Vec2::new(0.4, 0.4)),
                     ..default()
                 },
                 ..default()

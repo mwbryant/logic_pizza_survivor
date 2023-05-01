@@ -84,8 +84,6 @@ fn player_gain_exp(
 
 fn spawn_player(mut commands: Commands, assets: Res<AssetServer>) {
     let whip = spawn_whip(&mut commands, &assets);
-    let close = spawn_close_shot(&mut commands);
-    let area = spawn_area_shot(&mut commands);
     commands
         .spawn((
             SpriteBundle {
@@ -116,9 +114,7 @@ fn spawn_player(mut commands: Commands, assets: Res<AssetServer>) {
             Collider::ball(0.9),
             GamePlayEntity,
         ))
-        .add_child(whip)
-        .add_child(close)
-        .add_child(area);
+        .add_child(whip);
 }
 
 pub fn player_movement(

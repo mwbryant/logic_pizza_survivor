@@ -1,5 +1,3 @@
-use std::f32::consts::PI;
-
 use bevy::{input::common_conditions::input_toggle_active, time::Stopwatch};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use pizza_survivor::prelude::*;
@@ -34,20 +32,22 @@ fn main() {
             global_time: Stopwatch::new(),
             waves: vec![
                 Wave {
-                    next_spawn: Timer::from_seconds(0.9, TimerMode::Repeating),
-                    wave_size: 3,
+                    next_spawn: Timer::from_seconds(1.4, TimerMode::Repeating),
+                    wave_size: 2,
                     to_spawn: Enemy {
                         speed: 1.3,
                         health: 5.0,
+                        asset: "sorority_1.png".to_string(),
                         damage_per_second: 10.0,
                     },
                 },
                 Wave {
-                    next_spawn: Timer::from_seconds(0.2, TimerMode::Repeating),
-                    wave_size: 1,
+                    next_spawn: Timer::from_seconds(0.3, TimerMode::Repeating),
+                    wave_size: 2,
                     to_spawn: Enemy {
-                        speed: 1.8,
+                        speed: 2.2,
                         health: 1.0,
+                        asset: "sorority_2.png".to_string(),
                         damage_per_second: 3.0,
                     },
                 },
@@ -55,8 +55,9 @@ fn main() {
                     next_spawn: Timer::from_seconds(10.0, TimerMode::Repeating),
                     wave_size: 10,
                     to_spawn: Enemy {
-                        speed: 0.3,
+                        speed: 0.8,
                         health: 30.0,
+                        asset: "sorority_1.png".to_string(),
                         damage_per_second: 10.0,
                     },
                 },
