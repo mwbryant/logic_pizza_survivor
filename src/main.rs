@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::input::common_conditions::input_toggle_active;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use pizza_survivor::prelude::*;
@@ -50,13 +52,14 @@ fn main() {
 }
 
 fn spawn_background(mut commands: Commands, assets: Res<AssetServer>) {
+    let size = 1080.0 * PIXEL_TO_WORLD;
     for i in -5..5 {
         for j in -5..5 {
             commands.spawn((
                 SpriteBundle {
-                    transform: Transform::from_xyz(i as f32 * 10.0, j as f32 * 20.0, 0.0),
+                    transform: Transform::from_xyz(i as f32 * size, j as f32 * size, 0.0),
                     sprite: Sprite {
-                        custom_size: Some(Vec2::new(10.0, 20.0)),
+                        custom_size: Some(Vec2::new(size, size)),
                         ..default()
                     },
                     texture: assets.load("background.png"),

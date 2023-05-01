@@ -11,6 +11,7 @@ pub mod prelude {
     pub const HEIGHT: f32 = 480.0;
     pub const RENDER_WIDTH: f32 = 1920.;
     pub const RENDER_HEIGHT: f32 = 1080.;
+    pub const PIXEL_TO_WORLD: f32 = 30. / 1080.;
 
     pub use crate::attack::AttackPlugin;
     pub use crate::camera::GameCameraPlugin;

@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy::utils::FloatOrd;
 
 use crate::{prelude::*, ui::spawn_world_text};
@@ -51,15 +53,19 @@ pub fn spawn_area_shot(commands: &mut Commands) -> Entity {
         .id()
 }
 
-pub fn spawn_area_shot_bullet(commands: &mut Commands, spawn_pos: Vec2) -> Entity {
+pub fn spawn_area_shot_bullet(
+    commands: &mut Commands,
+    assets: &AssetServer,
+    spawn_pos: Vec2,
+) -> Entity {
     info!("Spawning bullet");
     commands
         .spawn((
             SpriteBundle {
                 transform: Transform::from_xyz(spawn_pos.x, spawn_pos.y, 1.0),
+                texture: assets.load("nacho.png"),
                 sprite: Sprite {
-                    color: Color::SEA_GREEN,
-                    custom_size: Some(Vec2::new(2.5, 2.5)),
+                    custom_size: Some(Vec2::splat(128.0 * PIXEL_TO_WORLD)),
                     ..default()
                 },
                 ..default()
@@ -151,14 +157,14 @@ pub fn spawn_close_shot_bullet(
         .id()
 }
 
-pub fn spawn_whip(commands: &mut Commands) -> Entity {
+pub fn spawn_whip(commands: &mut Commands, assets: &AssetServer) -> Entity {
     commands
         .spawn((
             SpriteBundle {
                 transform: Transform::from_xyz(3.5, 0.0, 0.0),
+                texture: assets.load("ramen.png"),
                 sprite: Sprite {
-                    color: Color::BLUE,
-                    custom_size: Some(Vec2::new(4.0, 0.6)),
+                    custom_size: Some(Vec2::new(156.0 * PIXEL_TO_WORLD, 33.0 * PIXEL_TO_WORLD)),
                     ..default()
                 },
                 ..default()
@@ -169,7 +175,7 @@ pub fn spawn_whip(commands: &mut Commands) -> Entity {
                 damage: 5.0,
             },
             Sensor,
-            Collider::cuboid(2.0, 0.3),
+            Collider::cuboid(156.0 * PIXEL_TO_WORLD / 2.0, 33.0 * PIXEL_TO_WORLD / 2.0),
         ))
         .id()
 }
@@ -249,6 +255,7 @@ fn close_shot_attack(
 fn area_shot_attack(
     mut commands: Commands,
     mut close_shots: Query<(&GlobalTransform, &mut AreaShot, &mut RngComponent)>,
+    assets: Res<AssetServer>,
     time: Res<Time>,
 ) {
     for (transform, mut close_shot, mut rng) in &mut close_shots {
@@ -259,6 +266,7 @@ fn area_shot_attack(
 
             spawn_area_shot_bullet(
                 &mut commands,
+                &assets,
                 transform.translation().truncate() + location + offset,
             );
         }

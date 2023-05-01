@@ -72,14 +72,19 @@ fn player_gain_exp(
     }
 }
 
-fn spawn_player(mut commands: Commands) {
-    let whip = spawn_whip(&mut commands);
+fn spawn_player(mut commands: Commands, assets: Res<AssetServer>) {
+    let whip = spawn_whip(&mut commands, &assets);
     let close = spawn_close_shot(&mut commands);
     let area = spawn_area_shot(&mut commands);
     commands
         .spawn((
             SpriteBundle {
                 transform: Transform::from_xyz(0.0, 0.0, 100.0),
+                texture: assets.load("player_1.png"),
+                sprite: Sprite {
+                    custom_size: Some(Vec2::new(63.0 * PIXEL_TO_WORLD, 113.0 * PIXEL_TO_WORLD)),
+                    ..default()
+                },
                 ..default()
             },
             Player {
