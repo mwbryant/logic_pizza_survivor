@@ -4,14 +4,18 @@ pub struct GameUiPlugin;
 
 impl Plugin for GameUiPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_header_ui)
-            .add_startup_system(spawn_player_ui)
+        app.add_system(spawn_header_ui.in_schedule(OnEnter(GameState::StartingLoop)))
+            .add_system(spawn_player_ui.in_schedule(OnEnter(GameState::StartingLoop)))
             .add_system(spawn_level_up_ui.in_schedule(OnEnter(GameState::LevelUp)))
+            .add_system(spawn_main_menu_ui.in_schedule(OnEnter(GameState::MainMenu)))
             .add_system(despawn_level_up_ui.in_schedule(OnExit(GameState::LevelUp)))
-            .add_system(button_system)
+            .add_system(despawn_main_menu_ui.in_schedule(OnExit(GameState::MainMenu)))
+            .add_system(level_up_button_system)
+            .add_system(start_button_system)
             .add_system(update_world_text)
-            .add_system(player_health_ui_sync)
-            .add_system(player_exp_ui_sync);
+            .add_systems(
+                (player_health_ui_sync, player_exp_ui_sync).in_set(OnUpdate(GameState::Gameplay)),
+            );
     }
 }
 
@@ -88,7 +92,7 @@ pub fn spawn_world_text(commands: &mut Commands, assets: &AssetServer, position:
     });
 }
 
-fn button_system(
+fn level_up_button_system(
     mut interaction_query: Query<
         (&Interaction, &mut BackgroundColor, &WeaponUpgrade),
         With<Button>,
@@ -113,7 +117,36 @@ fn button_system(
     }
 }
 
+fn start_button_system(
+    mut interaction_query: Query<
+        (&Interaction, &mut BackgroundColor),
+        (With<Button>, With<StartButtonUI>),
+    >,
+    mut next_state: ResMut<NextState<GameState>>,
+) {
+    for (interaction, mut color) in &mut interaction_query {
+        match *interaction {
+            Interaction::Clicked => {
+                *color = Color::RED.into();
+                next_state.set(GameState::StartingLoop);
+            }
+            Interaction::Hovered => {
+                *color = Color::GREEN.into();
+            }
+            Interaction::None => {
+                *color = Color::DARK_GREEN.into();
+            }
+        }
+    }
+}
+
 fn despawn_level_up_ui(mut commands: Commands, ui: Query<Entity, With<LevelUpUI>>) {
+    for ui in &ui {
+        commands.entity(ui).despawn_recursive();
+    }
+}
+
+fn despawn_main_menu_ui(mut commands: Commands, ui: Query<Entity, With<MainMenuUI>>) {
     for ui in &ui {
         commands.entity(ui).despawn_recursive();
     }
@@ -290,4 +323,101 @@ fn spawn_player_ui(mut commands: Commands) {
     commands.spawn(parent_node).with_children(|commands| {
         commands.spawn(health_node);
     });
+}
+
+fn spawn_main_menu_ui(mut commands: Commands, assets: Res<AssetServer>) {
+    let font = assets.load("fonts/pointfree.ttf");
+
+    let menu_parent = (
+        NodeBundle {
+            style: Style {
+                size: Size::new(Val::Percent(100.0), Val::Percent(100.0)),
+                position_type: PositionType::Absolute,
+                align_items: AlignItems::Center,
+                justify_content: JustifyContent::FlexStart,
+                padding: UiRect::left(Val::Percent(3.0)),
+                ..default()
+            },
+            ..default()
+        },
+        MainMenuUI,
+    );
+
+    let menu_title = NodeBundle {
+        style: Style {
+            size: Size::new(Val::Percent(70.0), Val::Percent(60.0)),
+            position_type: PositionType::Relative,
+            align_items: AlignItems::Center,
+            flex_direction: FlexDirection::Column,
+            justify_content: JustifyContent::SpaceAround,
+            ..default()
+        },
+        background_color: Color::DARK_GRAY.into(),
+        ..default()
+    };
+
+    let button = (
+        ButtonBundle {
+            style: Style {
+                size: Size::new(Val::Percent(50.0), Val::Percent(15.0)),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                align_self: AlignSelf::Center,
+                ..default()
+            },
+
+            background_color: Color::CRIMSON.into(),
+            ..default()
+        },
+        StartButtonUI,
+    );
+
+    let title_text = TextBundle::from_section(
+        "DoorDash Survivor",
+        TextStyle {
+            font: font.clone(),
+            font_size: 64.0,
+            color: Color::rgb(0.9, 0.9, 0.9),
+        },
+    );
+
+    let button_text = TextBundle::from_section(
+        "Start Game!",
+        TextStyle {
+            font,
+            font_size: 40.0,
+            color: Color::rgb(0.9, 0.9, 0.9),
+        },
+    );
+
+    commands.spawn(menu_parent).with_children(|commands| {
+        commands.spawn(menu_title).with_children(|commands| {
+            commands.spawn(title_text);
+            commands.spawn(button).with_children(|commands| {
+                commands.spawn(button_text);
+            });
+        });
+    });
+
+    commands.spawn((
+        SpriteBundle {
+            transform: Transform::from_xyz(12.5, 0.0, 100.0),
+            texture: assets.load("player_1.png"),
+            sprite: Sprite {
+                custom_size: Some(Vec2::new(
+                    63.0 * PIXEL_TO_WORLD * 2.0,
+                    113.0 * PIXEL_TO_WORLD * 2.0,
+                )),
+                ..default()
+            },
+            ..default()
+        },
+        TwoFrameAnimation {
+            frame_1: assets.load("player_1.png"),
+            frame_2: assets.load("player_2.png"),
+            current_frame: false,
+            timer: Timer::from_seconds(0.3, TimerMode::Repeating),
+        },
+        MainMenuUI,
+    ));
 }

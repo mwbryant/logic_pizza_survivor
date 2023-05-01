@@ -62,7 +62,7 @@ pub fn spawn_area_shot_bullet(
     commands
         .spawn((
             SpriteBundle {
-                transform: Transform::from_xyz(spawn_pos.x, spawn_pos.y, 1.0),
+                transform: Transform::from_xyz(spawn_pos.x, spawn_pos.y, 0.3),
                 texture: assets.load("nacho.png"),
                 sprite: Sprite {
                     custom_size: Some(Vec2::splat(128.0 * PIXEL_TO_WORLD)),

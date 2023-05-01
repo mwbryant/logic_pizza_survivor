@@ -7,15 +7,16 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(spawn_player).add_systems(
-            (
-                player_movement,
-                player_exp_start_pickup,
-                player_gain_exp,
-                player_level_up,
-            )
-                .in_set(OnUpdate(GameState::Gameplay)),
-        );
+        app.add_system(spawn_player.in_schedule(OnEnter(GameState::StartingLoop)))
+            .add_systems(
+                (
+                    player_movement,
+                    player_exp_start_pickup,
+                    player_gain_exp,
+                    player_level_up,
+                )
+                    .in_set(OnUpdate(GameState::Gameplay)),
+            );
     }
 }
 
@@ -110,7 +111,7 @@ fn spawn_player(mut commands: Commands, assets: Res<AssetServer>) {
         .add_child(area);
 }
 
-fn player_movement(
+pub fn player_movement(
     mut player: Query<(&mut Transform, &mut Sprite, &mut Player)>,
     input: Res<Input<KeyCode>>,
     time: Res<Time>,

@@ -9,11 +9,16 @@ pub struct UpgradePlugin;
 
 impl Plugin for UpgradePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(apply_player_upgrade)
-            .add_system(apply_whip_upgrade)
-            .add_system(apply_area_shot_upgrade)
-            .add_system(apply_close_shot_upgrade)
-            .add_event::<UpgradeSelected>();
+        app.add_systems(
+            (
+                apply_player_upgrade,
+                apply_whip_upgrade,
+                apply_area_shot_upgrade,
+                apply_close_shot_upgrade,
+            )
+                .in_set(OnUpdate(GameState::Gameplay)),
+        )
+        .add_event::<UpgradeSelected>();
     }
 }
 

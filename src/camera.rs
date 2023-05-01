@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{player::player_movement, prelude::*};
 use bevy::{
     prelude::*,
     render::{
@@ -18,7 +18,12 @@ impl Plugin for GameCameraPlugin {
         app.add_startup_system(spawn_camera)
             .add_system(update_cursor)
             .init_resource::<CursorPosition>()
-            .add_system(camera_follow.in_base_set(CoreSet::PostUpdate));
+            .add_system(
+                camera_follow
+                    .after(player_movement)
+                    .in_set(OnUpdate(GameState::Gameplay)),
+            )
+            .add_system(camera_zero.in_schedule(OnEnter(GameState::MainMenu)));
     }
 }
 
@@ -41,6 +46,12 @@ fn camera_follow(
         camera.translation.x = player.translation.x;
         camera.translation.y = player.translation.y;
     }
+}
+
+fn camera_zero(mut camera: Query<&mut Transform, With<MainCamera>>) {
+    let mut camera = camera.single_mut();
+    camera.translation.x = 0.0;
+    camera.translation.y = 0.0;
 }
 
 fn spawn_camera(

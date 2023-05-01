@@ -30,8 +30,11 @@ pub mod prelude {
     #[derive(States, PartialEq, Eq, Default, Debug, Clone, Hash)]
     pub enum GameState {
         #[default]
+        MainMenu,
+        StartingLoop,
         Gameplay,
         LevelUp,
+        GameOver,
     }
 
     #[derive(Component, Clone)]
@@ -163,6 +166,12 @@ pub mod prelude {
 
     #[derive(Component)]
     pub struct HealthUI;
+
+    #[derive(Component)]
+    pub struct MainMenuUI;
+
+    #[derive(Component)]
+    pub struct StartButtonUI;
 
     #[derive(Component)]
     pub struct WorldTextUI {

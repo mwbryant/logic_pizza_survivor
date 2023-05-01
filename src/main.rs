@@ -49,7 +49,13 @@ fn main() {
         .add_plugin(PlayerPlugin)
         .add_plugin(EnemyPlugin)
         .add_startup_system(spawn_background)
+        .add_system(advance_state.in_set(OnUpdate(GameState::StartingLoop)))
         .run();
+}
+
+// Just to prevent on enter gameplay getting called every time after level up
+fn advance_state(mut state: ResMut<NextState<GameState>>) {
+    state.set(GameState::Gameplay);
 }
 
 fn spawn_background(mut commands: Commands, assets: Res<AssetServer>) {
