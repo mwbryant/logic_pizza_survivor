@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use bevy::{input::common_conditions::input_toggle_active, time::Stopwatch};
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use pizza_survivor::prelude::*;
@@ -109,7 +111,8 @@ fn spawn_coin_assets(mut commands: Commands, assets: Res<AssetServer>) {
 }
 
 // Just to prevent on enter gameplay getting called every time after level up
-fn advance_state(mut state: ResMut<NextState<GameState>>) {
+fn advance_state(mut state: ResMut<NextState<GameState>>, mut game_manager: ResMut<WaveManager>) {
+    game_manager.global_time.set_elapsed(Duration::from_secs(0));
     state.set(GameState::Gameplay);
 }
 
