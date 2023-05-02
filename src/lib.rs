@@ -227,5 +227,6 @@ pub mod prelude {
     pub struct CoinAssets {
         pub image_1: Handle<Image>,
         pub image_2: Handle<Image>,
+        pub audio: Handle<AudioSource>,
     }
 }

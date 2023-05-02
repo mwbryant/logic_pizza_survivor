@@ -64,6 +64,8 @@ fn player_exp_start_pickup(
 fn player_gain_exp(
     mut commands: Commands,
     orbs: Query<(Entity, &Transform, &ExpOrb)>,
+    coin: Res<CoinAssets>,
+    audio: Res<Audio>,
     mut player: Query<(&Transform, &mut Player), Without<ExpOrb>>,
 ) {
     let (player_transform, mut player) = player.single_mut();
@@ -77,6 +79,14 @@ fn player_gain_exp(
         {
             //TODO event for sound
             player.exp += orb.value;
+            audio.play_with_settings(
+                coin.audio.clone(),
+                PlaybackSettings {
+                    repeat: false,
+                    volume: 0.5,
+                    speed: 1.0,
+                },
+            );
             commands.entity(entity).despawn_recursive();
         }
     }
