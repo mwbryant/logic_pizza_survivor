@@ -21,21 +21,47 @@ impl Plugin for PlayerPlugin {
     }
 }
 
-fn player_game_over(player: Query<&Player>, mut game_state: ResMut<NextState<GameState>>) {
+fn player_game_over(
+    player: Query<&Player>,
+    mut game_state: ResMut<NextState<GameState>>,
+    audio: Res<Audio>,
+    assets: Res<AssetServer>,
+) {
     let player = player.single();
 
     if player.health <= 0.0 {
+        audio.play_with_settings(
+            assets.load("death.wav"),
+            PlaybackSettings {
+                repeat: false,
+                volume: 0.9,
+                speed: 1.0,
+            },
+        );
         game_state.set(GameState::GameOver);
     }
 }
 
-fn player_level_up(mut player: Query<&mut Player>, mut game_state: ResMut<NextState<GameState>>) {
+fn player_level_up(
+    mut player: Query<&mut Player>,
+    mut game_state: ResMut<NextState<GameState>>,
+    audio: Res<Audio>,
+    assets: Res<AssetServer>,
+) {
     let mut player = player.single_mut();
 
     if player.exp >= player.next_level_exp {
         player.exp = 0;
         player.next_level_exp = (player.next_level_exp as f32 * 1.4) as i64;
         player.level += 1;
+        audio.play_with_settings(
+            assets.load("level_up.wav"),
+            PlaybackSettings {
+                repeat: false,
+                volume: 0.7,
+                speed: 1.0,
+            },
+        );
         game_state.set(GameState::LevelUp);
     }
 }
